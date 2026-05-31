@@ -1,21 +1,30 @@
 import RememberMeCheckBox from '@/components/Checkbox';
 import EmailInput from '@/components/EmailInput';
 import PasswordInput from '@/components/PasswordInput';
-import { Link, useRouter } from "expo-router";
+import { useAuth } from '@/context/AuthContext';
+import { Link } from "expo-router";
 import React, { useState } from "react";
-import { Button, Image, StyleSheet, Text, View } from "react-native";
+import { Alert, Button, Image, StyleSheet, Text, View } from "react-native";
 
 export default function Login() {
-    const[email, setEmail] = useState('');
-    const[senha, setSenha] = useState('');
-    const router = useRouter()
+    const [email, setEmail] = useState('');
+    const [senha, setSenha] = useState('');
+    const [loading, setLoading] = useState(false);
+    const { login } = useAuth();
 
-    function handleLogin() {
-        //Simulação de Login Simples 
-        if (email === 'admin@webmail.com' && senha == '123') {
-            router.replace('/home');
-        } else {
-            alert('Usuário ou senha inválidos');
+    async function handleLogin() {
+        if(!email || !senha) {
+            Alert.alert('Atenção', 'Preencha e-mail e senha.');
+            return;
+        }
+        setLoading(true);
+        try {
+            await login(email, senha);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Usuário ou senha inválidos';
+            Alert.alert('Erro', message);
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -34,9 +43,10 @@ export default function Login() {
             <RememberMeCheckBox />
 
             <Button 
-                title="Entrar" 
+                title={loading ? 'Entrando...' : 'Entrar'} 
                 color="#ffb300"
-                onPress={handleLogin} 
+                onPress={handleLogin}
+                disabled={loading} 
             />
             <View style={styles.row}>
                 <Text>Ainda não tem uma conta?</Text>
@@ -48,52 +58,40 @@ export default function Login() {
     );
 };
 
-    const styles = StyleSheet.create({
-        container: {
-            flex:1,
-            justifyContent:'center',
-            padding: 20,
-            backgroundColor: '#fff',
-        },
-        title: {
-            fontSize: 24,
-            marginBottom: 2,
-            textAlign: 'center',
-        },
-        input: {
-            borderWidth: 1,
-            borderColor: '#ccc',
-            borderRadius: 8,
-            padding: 10,
-            marginBottom: 10,
-        },
-        iconLogin: {
-            alignSelf: 'center',
-            width: 76,
-            height: 76,
-            marginBottom: 20, 
-        },
-        row: {
-            textAlign: 'center',
-            flexDirection:'row',
-            justifyContent:'center',
-            margin: 30,
-        },
-        textRegister: {
-            color:'#212529',
-            fontWeight:'bold',
-            marginLeft: 2,
-        },
-        rememberMe: {
-            flexDirection: 'row',
-        },
-        slogan:{
-            textAlign: 'center',
-            marginBottom: 30,
-            color: "#455A63",
-            fontSize: 14,
-        }
-
-    })
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  title: {
+    fontSize: 24,
+    marginBottom: 2,
+    textAlign: 'center',
+  },
+  iconLogin: {
+    alignSelf: 'center',
+    width: 76,
+    height: 76,
+    marginBottom: 20,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    margin: 30,
+  },
+  textRegister: {
+    color: '#212529',
+    fontWeight: 'bold',
+    marginLeft: 2,
+  },
+  slogan: {
+    textAlign: 'center',
+    marginBottom: 30,
+    color: '#455A63',
+    fontSize: 14,
+  },
+});
 
 
