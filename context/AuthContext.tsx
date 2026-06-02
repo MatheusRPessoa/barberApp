@@ -9,6 +9,9 @@ interface AuthContextData {
     login: (email: string, password: string) => Promise<void>;
     register: (data: RegisterData) => Promise<void>;
     logout: () => Promise<void>;
+    refreshUser: () => Promise<void>;
+    pendingMessage: string;
+    clearPendingMessage: () => void;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -16,6 +19,7 @@ const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [pendingMessage, setPendingMessage] = useState('');
     const router = useRouter();
 
     useEffect(() => {
@@ -49,15 +53,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async function login(email: string, password: string) {
         const { accessToken, refreshToken, user } = await authService.login(email, password);
         await saveTokens(accessToken, refreshToken);
-        setUser(user);
+        const fullUser = await authService.me();
+        setUser(fullUser);
         router.replace(user.type === 'BARBER' ? '/home' : '/client-home');
     }
 
     async function register(data: RegisterData) {
-        const { accessToken, refreshToken, user } = await authService.register(data);
-        await saveTokens(accessToken, refreshToken);
-        setUser(user);
-        router.replace(user.type === 'BARBER' ? '/home' : '/client-home');
+        await authService.register(data);
+        setPendingMessage('Conta criada com sucesso! Faça login para continuar')
+        router.replace({ pathname: '/login', params: { registered: 'true' } });
     }
 
     async function logout() {
@@ -70,8 +74,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }
 
+    async function refreshUser() {
+        const userData = await authService.me();
+        setUser(userData);
+    }
+
+    function clearPendingMessage() {
+        setPendingMessage('');
+    }
+
     return (
-        <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+        <AuthContext.Provider value={{
+            user,
+            loading,
+            login,
+            register,
+            logout,
+            refreshUser,
+            pendingMessage,
+            clearPendingMessage
+        }}>
             {children}
         </AuthContext.Provider>
     );
