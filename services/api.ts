@@ -24,7 +24,8 @@ async function request<T>(
         throw new Error(error.message || 'Erro na requisição');
     }
 
-    return res.json()
+    const text = await res.text();
+    return text ? JSON.parse(text) : (undefined as unknown as T);
 }
 
 export const api = {
@@ -34,4 +35,6 @@ export const api = {
         request<T>(path, { method: 'POST', body: JSON.stringify(body) }, useAuth),
     patch: <T>(path: string, body: unknown) =>
         request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
+    delete: <T>(path: string) =>
+        request<T>(path, { method: 'DELETE' }),
 };
