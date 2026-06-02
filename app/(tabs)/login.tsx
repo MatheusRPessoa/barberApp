@@ -3,26 +3,43 @@ import EmailInput from '@/components/EmailInput';
 import PasswordInput from '@/components/PasswordInput';
 import { useAuth } from '@/context/AuthContext';
 import { Link } from "expo-router";
-import React, { useState } from "react";
-import { Alert, Button, Image, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Button, Image, StyleSheet, Text, View } from "react-native";
 
 export default function Login() {
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
     const [loading, setLoading] = useState(false);
-    const { login } = useAuth();
+    const [feedbackMsg, setFeedbackMsg] = useState('');
+    const { login, pendingMessage, clearPendingMessage } = useAuth();
+    const [feedbackType, setFeedbackType] = useState<'success' | 'error'>('error');
+
+    function showFeedback(msg: string, type: 'success' | 'error' = 'error') {
+        setFeedbackMsg(msg);
+        setFeedbackType(type);
+        setTimeout(() => setFeedbackMsg(''), 4000);
+    }
+
+    useEffect(() => {
+        if (pendingMessage) {
+            showFeedback(pendingMessage, 'success');
+            clearPendingMessage();
+        }
+    }, [pendingMessage]);
+
 
     async function handleLogin() {
         if(!email || !senha) {
-            Alert.alert('Atenção', 'Preencha e-mail e senha.');
+            showFeedback('Preencha e-mail e senha.');
             return;
         }
         setLoading(true);
+        setFeedbackMsg('');
         try {
             await login(email, senha);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Usuário ou senha inválidos';
-            Alert.alert('Erro', message);
+            showFeedback(message);
         } finally {
             setLoading(false);
         }
@@ -42,7 +59,13 @@ export default function Login() {
             
             <RememberMeCheckBox />
 
-            <Button 
+            {feedbackMsg !== '' && (
+                <Text style={[styles.feedback, feedbackType === 'success' ? styles.feedbackSuccess : styles.feedbackError]}>
+                    {feedbackMsg}
+                </Text>
+            )}
+
+            <Button
                 title={loading ? 'Entrando...' : 'Entrar'} 
                 color="#ffb300"
                 onPress={handleLogin}
@@ -91,6 +114,21 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     color: '#455A63',
     fontSize: 14,
+  },
+  feedback: {
+    textAlign: 'center',
+    marginBottom: 12,
+    fontSize: 13,
+    borderRadius: 6,
+    padding: 10,
+  },
+  feedbackSuccess: {
+    backgroundColor: '#d4edda',
+    color: '#155724',
+  },
+  feedbackError: {
+    backgroundColor: '#f8d7da',
+    color: '#721c24',
   },
 });
 
