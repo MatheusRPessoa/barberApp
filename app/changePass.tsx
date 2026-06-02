@@ -1,4 +1,4 @@
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { Button, StyleSheet, Text, View } from "react-native";
 
 
