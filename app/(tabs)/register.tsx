@@ -1,3 +1,4 @@
+import { C } from '@/constants/Colors';
 import AccountType from "@/components/AccountType";
 import CnpjInput from "@/components/CnpjInput";
 import EmailInput from "@/components/EmailInput";
@@ -106,8 +107,8 @@ export default function Register() {
             ZIP_CODE: zipCode,
         }),
       });
-    } catch (err: any) {
-      showFeedback(err.message || 'Tente novamente.');
+    } catch (err) {
+      showFeedback(err instanceof Error ? err.message : 'Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -232,7 +233,7 @@ export default function Register() {
 
         <Button
           title={loading ? 'Criando conta...' : 'Criar Conta'}
-          color="#ffb300"
+          color={C.primary}
           onPress={makeAccount}
           disabled={loading}
         />
@@ -251,16 +252,16 @@ export default function Register() {
 const styles = StyleSheet.create({
   container:    { padding: 15, flexGrow: 1 },
   label:        { fontWeight: 'bold' },
-  sectionLabel: { fontWeight: 'bold', fontSize: 15, color: '#ffb300', marginTop: 16, marginBottom: 8, borderTopWidth: 1, borderTopColor: '#eee', paddingTop: 16 },
-  input:        { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10, marginBottom: 10 },
+  sectionLabel: { fontWeight: 'bold', fontSize: 15, color: C.primary, marginTop: 16, marginBottom: 8, borderTopWidth: 1, borderTopColor: C.borderLight, paddingTop: 16 },
+  input:        { borderWidth: 1, borderColor: C.borderInput, borderRadius: 8, padding: 10, marginBottom: 10 },
   row2col:      { flexDirection: 'row', alignItems: 'flex-start' },
-  textRegister: { color: '#212529', fontWeight: 'bold', marginLeft: 2 },
+  textRegister: { color: C.textLink, fontWeight: 'bold', marginLeft: 2 },
   row:          { flexDirection: 'row', justifyContent: 'center', margin: 25 },
   header:       { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   headerTitle:  { fontSize: 24, fontWeight: 'bold', marginLeft: 10 },
 
   feedback:        { textAlign: 'center', marginBottom: 12, fontSize: 13, borderRadius: 6, padding: 10 },
-  feedbackSuccess: { backgroundColor: '#d4edda', color: '#155724' },
-  feedbackError:   { backgroundColor: '#f8d7da', color: '#721c24' },
+  feedbackSuccess: { backgroundColor: C.successBg, color: C.successText },
+  feedbackError:   { backgroundColor: C.errorBg, color: C.errorText },
 
 });

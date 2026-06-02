@@ -1,3 +1,4 @@
+import { C } from '@/constants/Colors';
 import { Appointment, appointmentService } from '@/services/appointmentService';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +13,7 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNotificationsContext } from '@/context/NotificationsContext';
 
 type StatusFilter = 'ALL' | 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
 
@@ -31,13 +33,12 @@ const STATUS_LABEL: Record<Appointment['appointment_status'], string> = {
 };
 
 const STATUS_COLOR: Record<Appointment['appointment_status'], string> = {
-    PENDING:   '#ffb300',
-    CONFIRMED: '#007bff',
-    COMPLETED: '#28a745',
-    CANCELLED: '#dc3545',
+    PENDING:   C.primary,
+    CONFIRMED: C.info,
+    COMPLETED: C.success,
+    CANCELLED: C.danger,
 };
 
-// Badge pulsante para statuses ativos
 function PulsingBadge({ status }: { status: Appointment['appointment_status'] }) {
     const scale = useRef(new Animated.Value(1)).current;
     const active = status === 'PENDING';
@@ -71,8 +72,8 @@ export default function MyAppointments() {
     const [activeFilter, setActiveFilter] = useState<StatusFilter>('ALL');
     const [changedIds, setChangedIds]     = useState<Set<string>>(new Set());
     const prevStatusRef                   = useRef<Record<string, string>>({});
+    const { addNotification } = useNotificationsContext();
 
-    // Animação do indicador de sync
     const syncAnim = useRef(new Animated.Value(0.3)).current;
     const syncLoop = useRef<Animated.CompositeAnimation | null>(null);
 
@@ -83,7 +84,6 @@ export default function MyAppointments() {
         refetchOnWindowFocus: true,
     });
 
-    // Animação do ponto de sync ligada ao isFetching
     useEffect(() => {
         if (isFetching && !loading) {
             syncLoop.current = Animated.loop(
@@ -99,12 +99,18 @@ export default function MyAppointments() {
         }
     }, [isFetching, loading]);
 
-    // Detectar mudanças de status
     useEffect(() => {
         const prev = prevStatusRef.current;
         const changed = new Set<string>();
         appointments.forEach((a: Appointment) => {
-            if (prev[a.id] && prev[a.id] !== a.appointment_status) changed.add(a.id);
+            if (prev[a.id] && prev[a.id] !== a.appointment_status) {
+                changed.add(a.id);
+                addNotification({
+                    title: 'Agendamento atualizado',
+                    body:  `${a.barber?.shop_name ?? 'Barbearia'} — status: ${STATUS_LABEL[a.appointment_status]}`,
+                    data:  { appointmentId: a.id },
+                });
+            }
             prev[a.id] = a.appointment_status;
         });
         if (changed.size > 0) {
@@ -120,7 +126,6 @@ export default function MyAppointments() {
     return (
         <SafeAreaView style={styles.safe}>
 
-            {/* Header com indicador de sync */}
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Meus Agendamentos</Text>
                 <Animated.View style={[styles.syncDot, { opacity: syncAnim }]}>
@@ -129,7 +134,6 @@ export default function MyAppointments() {
                 {isFetching && !loading && <Text style={styles.syncLabel}>atualizando...</Text>}
             </View>
 
-            {/* Filtros */}
             <View style={styles.filtersWrapper}>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersRow}>
                     {FILTERS.map(f => (
@@ -158,7 +162,7 @@ export default function MyAppointments() {
                     </View>
                 ) : filtered.length === 0 ? (
                     <View style={styles.emptyContainer}>
-                        <Ionicons name="calendar-outline" size={48} color="#ddd" />
+                        <Ionicons name="calendar-outline" size={48} color={C.border} />
                         <Text style={styles.emptyText}>Nenhum agendamento encontrado.</Text>
                     </View>
                 ) : (
@@ -168,7 +172,7 @@ export default function MyAppointments() {
                             <View key={item.id} style={[styles.card, justChanged && styles.cardChanged]}>
                                 {justChanged && (
                                     <View style={styles.changedBanner}>
-                                        <Ionicons name="checkmark-circle" size={14} color="#007bff" />
+                                        <Ionicons name="checkmark-circle" size={14} color={C.info} />
                                         <Text style={styles.changedText}>Status atualizado!</Text>
                                     </View>
                                 )}
@@ -184,7 +188,7 @@ export default function MyAppointments() {
                                     <Text style={styles.shopName}>{item.barber?.shop_name}</Text>
                                     <Text style={styles.serviceName}>{(item.services ?? []).map(s => s.name).join(' + ')}</Text>
                                     <View style={styles.metaRow}>
-                                        <Ionicons name="time-outline" size={13} color="#888" />
+                                        <Ionicons name="time-outline" size={13} color={C.textMuted} />
                                         <Text style={styles.metaText}>{item.time}</Text>
                                         <Text style={styles.metaSep}>·</Text>
                                         <Text style={styles.metaText}>R$ {(item.services ?? []).reduce((s, svc) => s + Number(svc.price ?? 0), 0).toFixed(2)}</Text>
@@ -201,40 +205,40 @@ export default function MyAppointments() {
 }
 
 const styles = StyleSheet.create({
-    safe:             { flex: 1, backgroundColor: '#f5f5f5' },
-    header:           { backgroundColor: '#fff', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#eee', flexDirection: 'row', alignItems: 'center', gap: 8 },
-    headerTitle:      { fontSize: 20, fontWeight: 'bold', color: '#1a1a1a', flex: 1 },
+    safe:             { flex: 1, backgroundColor: C.bgPage },
+    header:           { backgroundColor: C.bgSurface, paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.borderLight, flexDirection: 'row', alignItems: 'center', gap: 8 },
+    headerTitle:      { fontSize: 20, fontWeight: 'bold', color: C.textPrimary, flex: 1 },
     syncDot:          { width: 10, height: 10, borderRadius: 5, alignItems: 'center', justifyContent: 'center' },
-    syncDotInner:     { width: 10, height: 10, borderRadius: 5, backgroundColor: '#007bff' },
-    syncLabel:        { fontSize: 11, color: '#007bff' },
+    syncDotInner:     { width: 10, height: 10, borderRadius: 5, backgroundColor: C.info },
+    syncLabel:        { fontSize: 11, color: C.info },
 
-    filtersWrapper:   { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee' },
+    filtersWrapper:   { backgroundColor: C.bgSurface, borderBottomWidth: 1, borderBottomColor: C.borderLight },
     filtersRow:       { paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center' },
-    filterChip:       { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: '#f5f5f5', borderWidth: 1, borderColor: '#eee', marginRight: 8 },
-    filterChipActive: { backgroundColor: '#1a1a1a', borderColor: '#1a1a1a' },
-    filterText:       { fontSize: 13, color: '#666' },
-    filterTextActive: { color: '#fff', fontWeight: '600' },
+    filterChip:       { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: C.bgPage, borderWidth: 1, borderColor: C.borderLight, marginRight: 8 },
+    filterChipActive: { backgroundColor: C.textPrimary, borderColor: C.textPrimary },
+    filterText:       { fontSize: 13, color: C.textSecondary },
+    filterTextActive: { color: C.bgSurface, fontWeight: '600' },
 
     listScroll:       { flex: 1 },
     scroll:           { padding: 16, paddingBottom: 32 },
     emptyContainer:   { alignItems: 'center', marginTop: 60 },
-    emptyText:        { color: '#aaa', fontSize: 14, marginTop: 10 },
+    emptyText:        { color: C.textFaint, fontSize: 14, marginTop: 10 },
 
-    card:             { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 12, gap: 12 },
-    cardChanged:      { borderWidth: 2, borderColor: '#007bff' },
-    changedBanner:    { position: 'absolute', top: -1, left: 12, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#e8f0fe', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-    changedText:      { fontSize: 11, color: '#007bff', fontWeight: '600' },
+    card:             { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 12, padding: 14, marginBottom: 12, gap: 12 },
+    cardChanged:      { borderWidth: 2, borderColor: C.info },
+    changedBanner:    { position: 'absolute', top: -1, left: 12, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.infoBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+    changedText:      { fontSize: 11, color: C.info, fontWeight: '600' },
 
     cardLeft:         {},
-    dateBox:          { width: 48, height: 52, backgroundColor: '#f5f5f5', borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-    dateDay:          { fontSize: 20, fontWeight: 'bold', color: '#1a1a1a' },
-    dateMonth:        { fontSize: 11, color: '#888', marginTop: 1 },
+    dateBox:          { width: 48, height: 52, backgroundColor: C.bgPage, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+    dateDay:          { fontSize: 20, fontWeight: 'bold', color: C.textPrimary },
+    dateMonth:        { fontSize: 11, color: C.textMuted, marginTop: 1 },
     cardBody:         { flex: 1 },
-    shopName:         { fontSize: 15, fontWeight: 'bold', color: '#1a1a1a' },
-    serviceName:      { fontSize: 13, color: '#666', marginTop: 2 },
+    shopName:         { fontSize: 15, fontWeight: 'bold', color: C.textPrimary },
+    serviceName:      { fontSize: 13, color: C.textSecondary, marginTop: 2 },
     metaRow:          { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-    metaText:         { fontSize: 12, color: '#888' },
-    metaSep:          { fontSize: 12, color: '#ccc' },
+    metaText:         { fontSize: 12, color: C.textMuted },
+    metaSep:          { fontSize: 12, color: C.borderInput },
 
     badge:            { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, gap: 5 },
     badgeDot:         { width: 7, height: 7, borderRadius: 4 },

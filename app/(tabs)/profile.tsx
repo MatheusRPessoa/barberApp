@@ -1,3 +1,4 @@
+import { C } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
 import { authService } from '@/services/authService';
 import { barberService, Service } from '@/services/barberService';
@@ -7,6 +8,7 @@ import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import PlaceHolderImage from '@/components/PlaceholderImage';
 
 export default function Profile() {
     const { user, logout, refreshUser } = useAuth();
@@ -67,8 +69,8 @@ export default function Profile() {
             await refreshUser();
             showFeedback('Perfil atualizado com sucesso!', 'success');
             setTimeout(() => setEditModal(false), 1500);
-        } catch (err: any) {
-            showFeedback(err.message || 'Erro ao atualizar. Tente novamente.', 'error');
+        } catch (err) {
+            showFeedback(err instanceof Error ? err.message : 'Erro ao atualizar. Tente novamente.', 'error');
         } finally {
             setSaving(false);
         }
@@ -134,11 +136,13 @@ export default function Profile() {
     const saveService  = () => { if (svcName && svcPrice && svcDuration) saveMutation.mutate(); };
     const deleteService = (id: string) => deleteMutation.mutate(id);
 
-    const menuItems = [
+    type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
+
+    const menuItems: { label: string; icon: IoniconsName; onPress: () => void }[] = [
         { label: 'Editar Perfil', icon: 'person-outline',       onPress: () => setEditModal(true) },
         ...(user?.type === 'BARBER'
-            ? [{ label: 'Meus Serviços', icon: 'cut-outline', onPress: () => setServicesModal(true) }]
-            : [{ label: 'Meus Agendamentos', icon: 'calendar-outline', onPress: () => router.push('/my-appointments') }]
+            ? [{ label: 'Meus Serviços', icon: 'cut-outline' as IoniconsName, onPress: () => setServicesModal(true) }]
+            : [{ label: 'Meus Agendamentos', icon: 'calendar-outline' as IoniconsName, onPress: () => router.push('/my-appointments') }]
         ),
         { label: 'Configurações', icon: 'settings-outline',      onPress: () => setSettingsModal(true) },
         { label: 'Notificações',  icon: 'notifications-outline', onPress: () => setNotifModal(true) },
@@ -153,7 +157,7 @@ export default function Profile() {
         </View>
 
         <View style={styles.userCard}>
-            <View style={styles.avatar} />
+            <PlaceHolderImage style={styles.avatar} logoSize={26}/>
             <View>
                 <Text style={styles.name}>{user?.name}</Text>
                 <Text style={styles.email}>{user?.email}</Text>
@@ -167,16 +171,16 @@ export default function Profile() {
                     style={[styles.menuItem, index < menuItems.length - 1 && styles.menuItemBorder]}
                     onPress={item.onPress}
                 >
-                    <Ionicons name={item.icon as any} size={22} color="#333" />
+                    <Ionicons name={item.icon} size={22} color={C.textTertiary} />
                     <Text style={styles.menuLabel}>{item.label}</Text>
-                    <Ionicons name="chevron-forward" size={18} color="#aaa" style={{ marginLeft: 'auto' }} />
+                    <Ionicons name="chevron-forward" size={18} color={C.textFaint} style={{ marginLeft: 'auto' }} />
                 </TouchableOpacity>
             ))}
 
             <View style={styles.divider} />
 
             <TouchableOpacity style={styles.menuItem} onPress={logout}>
-                <Ionicons name="log-out-outline" size={22} color="#ffb300" />
+                <Ionicons name="log-out-outline" size={22} color={C.primary} />
                 <Text style={styles.logoutText}>Sair</Text>
             </TouchableOpacity>
         </View>
@@ -267,13 +271,13 @@ export default function Profile() {
                 <View style={styles.sheet}>
                     <Text style={styles.sheetTitle}>Configurações</Text>
                     <TouchableOpacity style={styles.settingsItem} onPress={() => { setSettingsModal(false); router.push('/changePass'); }}>
-                        <Ionicons name="lock-closed-outline" size={20} color="#333" />
+                        <Ionicons name="lock-closed-outline" size={20} color={C.textTertiary} />
                         <Text style={styles.settingsLabel}>Alterar senha</Text>
-                        <Ionicons name="chevron-forward" size={16} color="#aaa" style={{ marginLeft: 'auto' }} />
+                        <Ionicons name="chevron-forward" size={16} color={C.textFaint} style={{ marginLeft: 'auto' }} />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.settingsItem}>
-                        <Ionicons name="trash-outline" size={20} color="#e74c3c" />
-                        <Text style={[styles.settingsLabel, { color: '#e74c3c' }]}>Excluir conta</Text>
+                        <Ionicons name="trash-outline" size={20} color={C.dangerStrong} />
+                        <Text style={[styles.settingsLabel, { color: C.dangerStrong }]}>Excluir conta</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.btnClose} onPress={() => setSettingsModal(false)}>
                         <Text style={styles.btnCloseText}>Fechar</Text>
@@ -296,8 +300,8 @@ export default function Profile() {
                             <Switch
                                 value={item.value}
                                 onValueChange={item.setter}
-                                thumbColor="#fff"
-                                trackColor={{ true: '#ffb300', false: '#ccc' }}
+                                thumbColor={C.bgSurface}
+                                trackColor={{ true: C.primary, false: C.borderInput }}
                             />
                         </View>
                     ))}
@@ -329,7 +333,6 @@ export default function Profile() {
             </View>
         </Modal>
 
-        {/* Modal Meus Serviços */}
         <Modal visible={servicesModal} animationType="slide" transparent>
             <View style={styles.overlay}>
                 <View style={styles.sheetTall}>
@@ -337,7 +340,7 @@ export default function Profile() {
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                         <Text style={styles.sheetTitle}>Meus Serviços</Text>
                         <TouchableOpacity onPress={openNewService}>
-                            <Ionicons name="add-circle" size={28} color="#ffb300" />
+                            <Ionicons name="add-circle" size={28} color={C.primary} />
                         </TouchableOpacity>
                     </View>
 
@@ -376,9 +379,9 @@ export default function Profile() {
 
                     <ScrollView showsVerticalScrollIndicator={false}>
                         {loadingServices ? (
-                            <Text style={{ textAlign: 'center', color: '#aaa', marginTop: 20 }}>Carregando...</Text>
+                            <Text style={{ textAlign: 'center', color: C.textFaint, marginTop: 20 }}>Carregando...</Text>
                         ) : services.length === 0 ? (
-                            <Text style={{ textAlign: 'center', color: '#aaa', marginTop: 20 }}>
+                            <Text style={{ textAlign: 'center', color: C.textFaint, marginTop: 20 }}>
                                 Nenhum serviço cadastrado ainda.{'\n'}Toque em + para adicionar.
                             </Text>
                         ) : (
@@ -389,10 +392,10 @@ export default function Profile() {
                                         <Text style={styles.svcMeta}>{svc.duration_minutes} min · R$ {Number(svc.price ?? 0).toFixed(2)}</Text>
                                     </View>
                                     <TouchableOpacity onPress={() => openEditService(svc)} style={{ marginRight: 12 }}>
-                                        <Ionicons name="pencil-outline" size={20} color="#888" />
+                                        <Ionicons name="pencil-outline" size={20} color={C.textMuted} />
                                     </TouchableOpacity>
                                     <TouchableOpacity onPress={() => deleteService(svc.id)}>
-                                        <Ionicons name="trash-outline" size={20} color="#e74c3c" />
+                                        <Ionicons name="trash-outline" size={20} color={C.dangerStrong} />
                                     </TouchableOpacity>
                                 </View>
                             ))
@@ -412,58 +415,58 @@ export default function Profile() {
 }
 
 const styles = StyleSheet.create({
-    safe:           { flex: 1, backgroundColor: '#f5f5f5' },
+    safe:           { flex: 1, backgroundColor: C.bgPage },
 
-    header:         { backgroundColor: '#fff', paddingHorizontal: 20,
+    header:         { backgroundColor: C.bgSurface, paddingHorizontal: 20,
                       paddingVertical: 16, marginBottom: 12 },
-    headerTitle:    { fontSize: 20, fontWeight: 'bold', color: '#1a1a1a' },
+    headerTitle:    { fontSize: 20, fontWeight: 'bold', color: C.textPrimary },
 
     userCard:       { flexDirection: 'row', alignItems: 'center',
-                      backgroundColor: '#fff', marginHorizontal: 16,
+                      backgroundColor: C.bgSurface, marginHorizontal: 16,
                       borderRadius: 12, padding: 16, gap: 14, marginBottom: 12 },
-    avatar:         { width: 64, height: 64, borderRadius: 32, backgroundColor: '#ccc' },
-    name:           { fontSize: 17, fontWeight: 'bold', color: '#1a1a1a' },
-    email:          { fontSize: 13, color: '#888', marginTop: 2 },
+    avatar:         { width: 64, height: 64, borderRadius: 32, backgroundColor: C.borderInput },
+    name:           { fontSize: 17, fontWeight: 'bold', color: C.textPrimary },
+    email:          { fontSize: 13, color: C.textMuted, marginTop: 2 },
 
-    menuCard:       { backgroundColor: '#fff', marginHorizontal: 16, borderRadius: 12, overflow: 'hidden' },
+    menuCard:       { backgroundColor: C.bgSurface, marginHorizontal: 16, borderRadius: 12, overflow: 'hidden' },
     menuItem:       { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 },
-    menuItemBorder: { borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
-    menuLabel:      { fontSize: 15, color: '#1a1a1a' },
-    divider:        { height: 1, backgroundColor: '#f0f0f0' },
-    logoutText:     { fontSize: 15, color: '#ffb300', fontWeight: '600' },
+    menuItemBorder: { borderBottomWidth: 1, borderBottomColor: C.bgDivider },
+    menuLabel:      { fontSize: 15, color: C.textPrimary },
+    divider:        { height: 1, backgroundColor: C.bgDivider },
+    logoutText:     { fontSize: 15, color: C.primary, fontWeight: '600' },
 
-    overlay:        { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-    sheet:          { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 },
-    sheetTitle:     { fontSize: 18, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 20 },
-    sheetLabel:     { fontSize: 13, fontWeight: '600', color: '#555', marginBottom: 6 },
-    sheetInput:     { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 14 },
-    inputDisabled:  { backgroundColor: '#f5f5f5', color: '#aaa' },
+    overlay:        { flex: 1, backgroundColor: C.overlay, justifyContent: 'flex-end' },
+    sheet:          { backgroundColor: C.bgSurface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 },
+    sheetTitle:     { fontSize: 18, fontWeight: 'bold', color: C.textPrimary, marginBottom: 20 },
+    sheetLabel:     { fontSize: 13, fontWeight: '600', color: C.textLabel, marginBottom: 6 },
+    sheetInput:     { borderWidth: 1, borderColor: C.border, borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 14 },
+    inputDisabled:  { backgroundColor: C.bgPage, color: C.textFaint },
     sheetRow:       { flexDirection: 'row', gap: 12, marginTop: 8 },
-    btnCancel:      { flex: 1, padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#ddd', alignItems: 'center' },
-    btnCancelText:  { color: '#666', fontWeight: '600' },
-    btnConfirm:     { flex: 1, padding: 14, borderRadius: 10, backgroundColor: '#ffb300', alignItems: 'center' },
-    btnConfirmText: { color: '#fff', fontWeight: '700' },
-    btnClose:       { marginTop: 20, padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#ddd', alignItems: 'center' },
-    btnCloseText:   { color: '#666', fontWeight: '600' },
-    settingsItem:   { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
-    settingsLabel:  { fontSize: 15, color: '#1a1a1a' },
-    switchRow:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
-    switchLabel:    { fontSize: 15, color: '#1a1a1a' },
+    btnCancel:      { flex: 1, padding: 14, borderRadius: 10, borderWidth: 1, borderColor: C.border, alignItems: 'center' },
+    btnCancelText:  { color: C.textSecondary, fontWeight: '600' },
+    btnConfirm:     { flex: 1, padding: 14, borderRadius: 10, backgroundColor: C.primary, alignItems: 'center' },
+    btnConfirmText: { color: C.bgSurface, fontWeight: '700' },
+    btnClose:       { marginTop: 20, padding: 14, borderRadius: 10, borderWidth: 1, borderColor: C.border, alignItems: 'center' },
+    btnCloseText:   { color: C.textSecondary, fontWeight: '600' },
+    settingsItem:   { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: C.bgDivider },
+    settingsLabel:  { fontSize: 15, color: C.textPrimary },
+    switchRow:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.bgDivider },
+    switchLabel:    { fontSize: 15, color: C.textPrimary },
     faqItem:        { marginBottom: 16 },
-    faqQuestion:    { fontSize: 14, fontWeight: '700', color: '#1a1a1a', marginBottom: 4 },
-    faqAnswer:      { fontSize: 13, color: '#666', lineHeight: 20 },
+    faqQuestion:    { fontSize: 14, fontWeight: '700', color: C.textPrimary, marginBottom: 4 },
+    faqAnswer:      { fontSize: 13, color: C.textSecondary, lineHeight: 20 },
 
-    sheetTall:      { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40, maxHeight: '90%' },
+    sheetTall:      { backgroundColor: C.bgSurface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40, maxHeight: '90%' },
     feedback:        { textAlign: 'center', fontSize: 13, borderRadius: 6, padding: 10, marginBottom: 12 },
-    feedbackSuccess: { backgroundColor: '#d4edda', color: '#155724' },
-    feedbackError:   { backgroundColor: '#f8d7da', color: '#721c24' },
-    sectionDivider: { borderTopWidth: 1, borderTopColor: '#f0f0f0', marginTop: 4, marginBottom: 16, paddingTop: 16 },
-    sectionTitle:   { fontSize: 13, fontWeight: '700', color: '#ffb300', textTransform: 'uppercase', letterSpacing: 0.5 },
+    feedbackSuccess: { backgroundColor: C.successBg, color: C.successText },
+    feedbackError:   { backgroundColor: C.errorBg, color: C.errorText },
+    sectionDivider: { borderTopWidth: 1, borderTopColor: C.bgDivider, marginTop: 4, marginBottom: 16, paddingTop: 16 },
+    sectionTitle:   { fontSize: 13, fontWeight: '700', color: C.primary, textTransform: 'uppercase', letterSpacing: 0.5 },
     row2col:        { flexDirection: 'row', alignItems: 'flex-start' },
 
-    svcForm:        { backgroundColor: '#fffbf0', borderRadius: 12, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: '#ffb300' },
-    svcFormTitle:   { fontSize: 14, fontWeight: '700', color: '#b8860b', marginBottom: 12 },
-    svcItem:        { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 10, backgroundColor: '#f9f9f9', marginBottom: 10 },
-    svcName:        { fontSize: 15, fontWeight: '600', color: '#1a1a1a' },
-    svcMeta:        { fontSize: 12, color: '#888', marginTop: 2 },
+    svcForm:        { backgroundColor: C.primaryBg, borderRadius: 12, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: C.primary },
+    svcFormTitle:   { fontSize: 14, fontWeight: '700', color: C.primaryDark, marginBottom: 12 },
+    svcItem:        { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 10, backgroundColor: C.bgSubtle, marginBottom: 10 },
+    svcName:        { fontSize: 15, fontWeight: '600', color: C.textPrimary },
+    svcMeta:        { fontSize: 12, color: C.textMuted, marginTop: 2 },
 });

@@ -1,5 +1,6 @@
+import { C } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
-import { appointmentService } from '@/services/appointmentService';
+import { Appointment, appointmentService } from '@/services/appointmentService';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
@@ -17,21 +18,33 @@ export default function TabsLayout() {
         refetchOnWindowFocus: true,
     });
 
+    const { data: myAppointments = [] } = useQuery({
+        queryKey: ['appointments-mine'],
+        queryFn: () => appointmentService.listMine(),
+        enabled: !isBarber,
+        refetchInterval: 15_000,
+        refetchOnWindowFocus: true,
+    })
+
     const pendingCount = allAppointments.filter(
-        (a: any) => a.appointment_status === 'PENDING'
+        (a: Appointment) => a.appointment_status === 'PENDING'
+    ).length;
+
+    const clientPendingCount = myAppointments.filter(
+        (a: Appointment) => a.appointment_status === 'PENDING'
     ).length;
 
     return (
         <Tabs
             screenOptions={{
                 headerShown: false,
-                tabBarActiveTintColor: '#ffb300',
-                tabBarInactiveTintColor: '#888',
-                tabBarStyle: { backgroundColor: '#fff', borderTopColor: '#eee', height: 60 },
+                tabBarActiveTintColor: C.primary,
+                tabBarInactiveTintColor: C.textMuted,
+                tabBarStyle: { backgroundColor: C.bgSurface, borderTopColor: C.borderLight, height: 60 },
                 tabBarLabelStyle: { fontSize: 11, marginBottom: 6 },
             }}
         >
-            {/* Tab Home — barber vê home, client vê client-home */}
+
             <Tabs.Screen
                 name="home"
                 options={{
@@ -49,7 +62,6 @@ export default function TabsLayout() {
                 }}
             />
 
-            {/* Cupons — ambos */}
             <Tabs.Screen
                 name="coupons"
                 options={{
@@ -58,7 +70,6 @@ export default function TabsLayout() {
                 }}
             />
 
-            {/* Agenda — só barbeiro */}
             <Tabs.Screen
                 name="schedule"
                 options={{
@@ -66,21 +77,21 @@ export default function TabsLayout() {
                     href: isBarber ? undefined : null,
                     tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" size={size} color={color} />,
                     tabBarBadge: isBarber && pendingCount > 0 ? pendingCount : undefined,
-                    tabBarBadgeStyle: { backgroundColor: '#ffb300', color: '#fff', fontSize: 10 },
+                    tabBarBadgeStyle: { backgroundColor: C.primary, color: C.bgSurface, fontSize: 10 },
                 }}
             />
 
-            {/* Agendamentos — só cliente */}
             <Tabs.Screen
                 name="my-appointments"
                 options={{
                     title: 'Agendamentos',
                     href: isBarber ? null : undefined,
                     tabBarIcon: ({ color, size }) => <Ionicons name="calendar-outline" size={size} color={color} />,
+                    tabBarBadge: !isBarber && clientPendingCount > 0 ? clientPendingCount : undefined,      
+                    tabBarBadgeStyle: { backgroundColor: C.primary, color: C.bgSurface, fontSize: 10 },
                 }}
             />
 
-            {/* Perfil — ambos */}
             <Tabs.Screen
                 name="profile"
                 options={{
@@ -89,7 +100,6 @@ export default function TabsLayout() {
                 }}
             />
 
-            {/* Telas sem tab */}
             <Tabs.Screen name="index"    options={{ href: null }} />
             <Tabs.Screen name="login"    options={{ href: null }} />
             <Tabs.Screen name="register" options={{ href: null }} />

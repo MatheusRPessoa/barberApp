@@ -1,26 +1,46 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
+export const C = {
+    bgPage:        '#f5f5f5',
+    bgSurface:     '#fff',
+    bgSubtle:      '#f9f9f9',
+    bgDivider:     '#f0f0f0',
+    bgDisabled:    '#e0e0e0',
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+    primary:       '#ffb300',
+    primaryDark:   '#b8860b',
+    primaryBg:     '#fffbf0',
+    primaryMuted:  '#c9a96e',
 
-export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-  },
-};
+    navyStatCard:  '#1e2a3a',
+    navySection:   '#1a1a2e',
+    navyCard:      '#16213e',
+    navyImage:     '#0f3460',
+
+    textPrimary:   '#1a1a1a',
+    textSecondary: '#666',
+    textLabel:     '#555',
+    textTertiary:  '#333',
+    textMuted:     '#888',
+    textFaint:     '#aaa',
+    textOnNavy:    '#a0aec0',
+    textLink:      '#212529',
+    textSlogan:    '#455A63',
+
+    borderLight:   '#eee',
+    border:        '#ddd',
+    borderInput:   '#ccc',
+
+    success:       '#28a745',
+    info:          '#007bff',
+    danger:        '#dc3545',
+    dangerStrong:  '#e74c3c',
+
+    successBg:     '#d4edda',
+    successText:   '#155724',
+    errorBg:       '#f8d7da',
+    errorText:     '#721c24',
+    warningBg:     '#fff3cd',
+    warningText:   '#856404',
+    infoBg:        '#e8f0fe',
+
+    overlay:       'rgba(0,0,0,0.5)',
+} as const;

@@ -1,3 +1,4 @@
+import { C } from '@/constants/Colors';
 import { Appointment, appointmentService } from '@/services/appointmentService';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -117,7 +118,7 @@ export default function Schedule() {
 
     if (loading) return (
         <SafeAreaView style={styles.safe}>
-            <ActivityIndicator style={{ flex: 1 }} size="large" color="#ffb300" />
+            <ActivityIndicator style={{ flex: 1 }} size="large" color={C.primary} />
         </SafeAreaView>
     );
 
@@ -126,29 +127,29 @@ export default function Schedule() {
 
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()}>
-                    <Ionicons name="arrow-back" size={24} color="#1a1a1a" />
+                    <Ionicons name="arrow-back" size={24} color={C.textPrimary} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Agenda</Text>
             </View>
             
             <View style={styles.statsCard}>
                 <View style={styles.stat}>
-                    <Text style={[styles.statNum, { color: '#28a745' }]}>{todayConfirmed}</Text>
+                    <Text style={[styles.statNum, { color: C.success }]}>{todayConfirmed}</Text>
                     <Text style={styles.statLabel}>Confirmados</Text>
                 </View>
                 <View style={styles.statDivider} />
                 <View style={styles.stat}>
-                    <Text style={[styles.statNum, { color: '#ffb300' }]}>{todayPending}</Text>
+                    <Text style={[styles.statNum, { color: C.primary }]}>{todayPending}</Text>
                     <Text style={styles.statLabel}>Pendentes</Text>
                 </View>
                 <View style={styles.statDivider} />
                 <View style={styles.stat}>
-                    <Text style={[styles.statNum, { color: '#007bff' }]}>{todayCompleted}</Text>
+                    <Text style={[styles.statNum, { color: C.info }]}>{todayCompleted}</Text>
                     <Text style={styles.statLabel}>Concluídos</Text>
                 </View>
                 <View style={styles.statDivider} />
                 <View style={styles.stat}>
-                    <Text style={[styles.statNum, { color: '#dc3545' }]}>{todayCancelled}</Text>
+                    <Text style={[styles.statNum, { color: C.danger }]}>{todayCancelled}</Text>
                     <Text style={styles.statLabel}>Cancelados</Text>
                 </View>
             </View>
@@ -172,7 +173,7 @@ export default function Schedule() {
                 )}
 
                 <View style={[styles.sectionHeader, { marginTop: 24 }]}>
-                    <View style={[styles.sectionDot, { backgroundColor: '#007bff' }]} />
+                    <View style={[styles.sectionDot, { backgroundColor: C.info }]} />
                     <Text style={styles.sectionTitle}>Próximos Agendamentos</Text>
                     <Text style={styles.sectionCount}>{upcoming.length} agendamento{upcoming.length !== 1 ? 's' : ''}</Text>
                 </View>
@@ -183,7 +184,7 @@ export default function Schedule() {
                     Object.entries(upcomingByDate).map(([date, items]) => (
                         <View key={date}>
                             <View style={styles.dateHeader}>
-                                <Ionicons name="calendar-outline" size={14} color="#888" />
+                                <Ionicons name="calendar-outline" size={14} color={C.textMuted} />
                                 <Text style={styles.dateHeaderText}>{formatDateHeader(date)}</Text>
                             </View>
                             {items.map(item => <AppointmentCard key={item.id} item={item} />)}
@@ -197,48 +198,48 @@ export default function Schedule() {
 }
 
 const styles = StyleSheet.create({
-    safe:             { flex: 1, backgroundColor: '#f5f5f5' },
-    header:           { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee', gap: 12 },
-    headerTitle:      { flex: 1, fontSize: 18, fontWeight: 'bold', color: '#1a1a1a' },
+    safe:             { flex: 1, backgroundColor: C.bgPage },
+    header:           { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: C.bgSurface, borderBottomWidth: 1, borderBottomColor: C.borderLight, gap: 12 },
+    headerTitle:      { flex: 1, fontSize: 18, fontWeight: 'bold', color: C.textPrimary },
 
-    statsCard:        { flexDirection: 'row', backgroundColor: '#fff', marginHorizontal: 16, marginTop: 12, borderRadius: 12, paddingVertical: 14, marginBottom: 4 },
+    statsCard:        { flexDirection: 'row', backgroundColor: C.bgSurface, marginHorizontal: 16, marginTop: 12, borderRadius: 12, paddingVertical: 14, marginBottom: 4 },
     stat:             { flex: 1, alignItems: 'center' },
     statNum:          { fontSize: 20, fontWeight: 'bold' },
-    statLabel:        { fontSize: 11, color: '#888', marginTop: 3 },
-    statDivider:      { width: 1, backgroundColor: '#f0f0f0', marginVertical: 4 },
+    statLabel:        { fontSize: 11, color: C.textMuted, marginTop: 3 },
+    statDivider:      { width: 1, backgroundColor: C.bgDivider, marginVertical: 4 },
 
     scroll:           { padding: 16, paddingBottom: 40 },
 
     sectionHeader:    { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 8 },
-    sectionDot:       { width: 10, height: 10, borderRadius: 5, backgroundColor: '#ffb300' },
-    sectionTitle:     { fontSize: 16, fontWeight: 'bold', color: '#1a1a1a', flex: 1 },
-    sectionCount:     { fontSize: 12, color: '#aaa' },
+    sectionDot:       { width: 10, height: 10, borderRadius: 5, backgroundColor: C.primary },
+    sectionTitle:     { fontSize: 16, fontWeight: 'bold', color: C.textPrimary, flex: 1 },
+    sectionCount:     { fontSize: 12, color: C.textFaint },
 
     dateHeader:       { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 4, marginBottom: 6, marginTop: 4 },
-    dateHeaderText:   { fontSize: 13, fontWeight: '600', color: '#666' },
+    dateHeaderText:   { fontSize: 13, fontWeight: '600', color: C.textSecondary },
 
-    empty:            { textAlign: 'center', color: '#aaa', marginTop: 16, marginBottom: 8, fontSize: 13 },
+    empty:            { textAlign: 'center', color: C.textFaint, marginTop: 16, marginBottom: 8, fontSize: 13 },
 
-    card:             { backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 10 },
+    card:             { backgroundColor: C.bgSurface, borderRadius: 12, padding: 16, marginBottom: 10 },
     cardTop:          { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-    time:             { fontSize: 14, fontWeight: '700', color: '#333', width: 44 },
+    time:             { fontSize: 14, fontWeight: '700', color: C.textTertiary, width: 44 },
     cardInfo:         { flex: 1 },
-    clientName:       { fontSize: 15, fontWeight: '700', color: '#1a1a1a' },
-    serviceName:      { fontSize: 13, color: '#888', marginTop: 2 },
+    clientName:       { fontSize: 15, fontWeight: '700', color: C.textPrimary },
+    serviceName:      { fontSize: 13, color: C.textMuted, marginTop: 2 },
     badge:            { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
-    badgeGreen:       { backgroundColor: '#28a745' },
-    badgeBlue:        { backgroundColor: '#007bff' },
-    badgeOrange:      { backgroundColor: '#ffb300' },
-    badgeRed:         { backgroundColor: '#dc3545' },
-    badgeText:        { color: '#fff', fontSize: 11, fontWeight: '700' },
-    price:            { fontSize: 15, fontWeight: '700', color: '#1a1a1a' },
+    badgeGreen:       { backgroundColor: C.success },
+    badgeBlue:        { backgroundColor: C.info },
+    badgeOrange:      { backgroundColor: C.primary },
+    badgeRed:         { backgroundColor: C.danger },
+    badgeText:        { color: C.bgSurface, fontSize: 11, fontWeight: '700' },
+    price:            { fontSize: 15, fontWeight: '700', color: C.textPrimary },
 
     cardActions:      { flexDirection: 'row', gap: 10 },
-    btnConfirm:       { flex: 1, backgroundColor: '#28a745', borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
-    btnConfirmText:   { color: '#fff', fontWeight: '600', fontSize: 14 },
-    btnCancel:        { flex: 1, backgroundColor: '#dc3545', borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
-    btnCancelText:    { color: '#fff', fontWeight: '600', fontSize: 14 },
-    btnDisabled:      { backgroundColor: '#e0e0e0' },
-    btnComplete:      { flex: 1, backgroundColor: '#007bff', borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
-    btnCompleteText:  { color: '#fff', fontWeight: '600', fontSize: 14 },
+    btnConfirm:       { flex: 1, backgroundColor: C.success, borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
+    btnConfirmText:   { color: C.bgSurface, fontWeight: '600', fontSize: 14 },
+    btnCancel:        { flex: 1, backgroundColor: C.danger, borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
+    btnCancelText:    { color: C.bgSurface, fontWeight: '600', fontSize: 14 },
+    btnDisabled:      { backgroundColor: C.bgDisabled },
+    btnComplete:      { flex: 1, backgroundColor: C.info, borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
+    btnCompleteText:  { color: C.bgSurface, fontWeight: '600', fontSize: 14 },
 });

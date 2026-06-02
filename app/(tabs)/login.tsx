@@ -1,3 +1,4 @@
+import { C } from '@/constants/Colors';
 import RememberMeCheckBox from '@/components/Checkbox';
 import EmailInput from '@/components/EmailInput';
 import PasswordInput from '@/components/PasswordInput';
@@ -67,7 +68,7 @@ export default function Login() {
 
             <Button
                 title={loading ? 'Entrando...' : 'Entrar'} 
-                color="#ffb300"
+                color={C.primary}
                 onPress={handleLogin}
                 disabled={loading} 
             />
@@ -86,7 +87,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: C.bgSurface,
   },
   title: {
     fontSize: 24,
@@ -105,14 +106,14 @@ const styles = StyleSheet.create({
     margin: 30,
   },
   textRegister: {
-    color: '#212529',
+    color: C.textLink,
     fontWeight: 'bold',
     marginLeft: 2,
   },
   slogan: {
     textAlign: 'center',
     marginBottom: 30,
-    color: '#455A63',
+    color: C.textSlogan,
     fontSize: 14,
   },
   feedback: {
@@ -123,12 +124,12 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   feedbackSuccess: {
-    backgroundColor: '#d4edda',
-    color: '#155724',
+    backgroundColor: C.successBg,
+    color: C.successText,
   },
   feedbackError: {
-    backgroundColor: '#f8d7da',
-    color: '#721c24',
+    backgroundColor: C.errorBg,
+    color: C.errorText,
   },
 });
 

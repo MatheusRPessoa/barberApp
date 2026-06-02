@@ -1,3 +1,4 @@
+import { C } from '@/constants/Colors';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,8 +15,8 @@ export default function Coupons() {
 }
 
 const styles = StyleSheet.create({
-    safe: { flex: 1, backgroundColor: '#f5f5f5' },
+    safe: { flex: 1, backgroundColor: C.bgPage },
     container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    title: { fontSize: 22, fontWeight: 'bold', color: '#1a1a1a' },
-    subtitle: { fontSize: 14, color: '#888', marginTop: 8 },
+    title: { fontSize: 22, fontWeight: 'bold', color: C.textPrimary },
+    subtitle: { fontSize: 14, color: C.textMuted, marginTop: 8 },
 });
