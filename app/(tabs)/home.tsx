@@ -2,7 +2,8 @@ import { Appointment, appointmentService } from '@/services/appointmentService';
 import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -20,45 +21,42 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function Home() {
     const router = useRouter();
     const { user, logout } = useAuth();
-    const [appointments, setAppointments] = useState<Appointment[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
+    const queryClient = useQueryClient();
     const [modalVisible, setModalVisible] = useState(false);
     const [clientName, setClientName] = useState('');
     const [service, setService] = useState('');
     const [time, setTime] = useState('');
 
-    const fetchAppointments = useCallback(async () => {
+    const { data: appointments = [], isLoading: loading, isRefetching, refetch } = useQuery<Appointment[]>({
+        queryKey: ['appointments-today'],
+        queryFn:  () => appointmentService.listToday(),
+        refetchInterval:      30_000,
+        refetchOnWindowFocus: true,
+    });
+
+    const onRefresh = () => { refetch(); };
+
+    async function handleUpdateStatus(id: string, status: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED') {
         try {
-            const data = await appointmentService.listToday();
-            setAppointments(data);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Erro ao carregar agendamentos';
-            Alert.alert('Erro', message);
-        } finally {
-            setLoading(false);
-            setRefreshing(false);
+            await appointmentService.updateStatus(id, status);
+            queryClient.invalidateQueries({ queryKey: ['appointments-today'] });
+        } catch {
+            Alert.alert('Erro', 'Não foi possível atualizar o agendamento.');
         }
-    }, []);
-
-    useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
-
-    const onRefresh = () => {
-        setRefreshing(true);
-        fetchAppointments();
-    };
+    }
 
     const todayEarnings = appointments
         .filter(a => a.appointment_status === 'COMPLETED')
-        .reduce((sum, a) => sum + (a.service?.price ?? 0), 0);
+        .reduce((sum, a) => sum + Number(a.service?.price ?? 0), 0);
 
-    const nextAppointment = appointments.find(a => a.appointment_status === 'UPCOMING');
+    const nextAppointment = appointments.find(a => a.appointment_status === 'PENDING' || a.appointment_status === 'CONFIRMED')
 
     const statusLabel = (s: Appointment['appointment_status']) =>
-        ({ COMPLETED: 'Concluído', UPCOMING: 'Agendado', CANCELLED: 'Cancelado' })[s];
+        ({ CONFIRMED: 'Confirmado', PENDING: 'Pendente', COMPLETED: 'Concluído', CANCELLED: 'Cancelado' })[s];
 
     const badgeStyle = (s: Appointment['appointment_status']) =>
         s === 'COMPLETED' ? styles.badgeGreen
+        : s === 'CONFIRMED' ? styles.badgeBlue
         : s === 'CANCELLED' ? styles.badgeGrey
         : styles.badgeOrange;
 
@@ -75,7 +73,7 @@ export default function Home() {
             <ScrollView
                 contentContainerStyle={styles.scroll}
                 showsVerticalScrollIndicator={false}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+                refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
             >
                 <View style={styles.header}>
                     <View style={styles.avatar} />
@@ -118,6 +116,30 @@ export default function Home() {
                                 </Text>
                             </View>
                             <Text style={styles.appointmentTime}>{nextAppointment.time}</Text>
+                        </View>
+                        <View style={styles.actionRow}>
+                            {nextAppointment.appointment_status === 'PENDING' && (
+                                <TouchableOpacity
+                                    style={styles.actionBtnConfirm}
+                                    onPress={() => handleUpdateStatus(nextAppointment.id, 'CONFIRMED')}
+                                >
+                                    <Text style={styles.actionBtnText}>Confirmar</Text>
+                                </TouchableOpacity>
+                            )}
+                            {nextAppointment.appointment_status === 'CONFIRMED' && (
+                                <TouchableOpacity
+                                    style={styles.actionBtnComplete}
+                                    onPress={() => handleUpdateStatus(nextAppointment.id, 'COMPLETED')}
+                                >
+                                    <Text style={styles.actionBtnText}>Concluir</Text>
+                                </TouchableOpacity>
+                            )}
+                            <TouchableOpacity
+                                style={styles.actionBtnCancel}
+                                onPress={() => handleUpdateStatus(nextAppointment.id, 'CANCELLED')}
+                            >
+                                <Text style={styles.actionBtnText}>Cancelar</Text>
+                            </TouchableOpacity>
                         </View>
                     </View>
                 ) : (
@@ -257,6 +279,7 @@ const styles = StyleSheet.create({
     badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
     badgeGreen: { backgroundColor: '#28a745' },
     badgeOrange: { backgroundColor: '#ffb300' },
+    badgeBlue: { backgroundColor: '#007bff' },
     badgeGrey: { backgroundColor: '#aaa' },
     badgeText: { color: '#fff', fontSize: 11, fontWeight: '600' },
     footer: { flexDirection: 'row', gap: 12, padding: 16, backgroundColor: '#f5f5f5' },
@@ -275,4 +298,10 @@ const styles = StyleSheet.create({
     modalBtnCancelText: { color: '#666', fontWeight: '600' },
     modalBtnConfirm: { flex: 1, padding: 14, borderRadius: 10, backgroundColor: '#ffb300', alignItems: 'center' },
     modalBtnConfirmText: { color: '#fff', fontWeight: '700' },
+
+    actionRow:         { flexDirection: 'row', gap: 10, marginTop: 14 },
+    actionBtnConfirm:  { flex: 1, backgroundColor: '#28a745', borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
+    actionBtnComplete: { flex: 1, backgroundColor: '#007bff', borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
+    actionBtnCancel:   { flex: 1, backgroundColor: '#dc3545', borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
+    actionBtnText:     { color: '#fff', fontWeight: '700', fontSize: 14 },
 });
