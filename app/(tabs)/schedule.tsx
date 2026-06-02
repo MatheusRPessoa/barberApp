@@ -80,12 +80,12 @@ export default function Schedule() {
                     <Text style={styles.time}>{item.time}</Text>
                     <View style={styles.cardInfo}>
                         <Text style={styles.clientName}>{item.client?.user?.name}</Text>
-                        <Text style={styles.serviceName}>{item.service?.name}</Text>
+                        <Text style={styles.serviceName}>{(item.services ?? []).map(s => s.name).join(' + ')}</Text>
                     </View>
                     <View style={[styles.badge, badgeStyle(item.appointment_status)]}>
                         <Text style={styles.badgeText}>{statusLabel(item.appointment_status)}</Text>
                     </View>
-                    <Text style={styles.price}>R$ {Number(item.service?.price ?? 0).toFixed(2)}</Text>
+                    <Text style={styles.price}>R$ {(item.services ?? []).reduce((s, svc) => s + Number(svc.price ?? 0), 0).toFixed(2)}</Text>
                 </View>
                 <View style={styles.cardActions}>
                     {item.appointment_status === 'PENDING' && (

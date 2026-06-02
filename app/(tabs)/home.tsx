@@ -47,7 +47,7 @@ export default function Home() {
 
     const todayEarnings = appointments
         .filter(a => a.appointment_status === 'COMPLETED')
-        .reduce((sum, a) => sum + Number(a.service?.price ?? 0), 0);
+        .reduce((sum, a) => sum + (a.services ?? []).reduce((s, svc) => s + Number(svc.price ?? 0), 0), 0);
 
     const nextAppointment = appointments.find(a => a.appointment_status === 'PENDING' || a.appointment_status === 'CONFIRMED')
 
@@ -112,7 +112,7 @@ export default function Home() {
                                     {nextAppointment.client?.user?.name}
                                 </Text>
                                 <Text style={styles.appointmentService}>
-                                    {nextAppointment.service?.name}
+                                    {nextAppointment.services?.map(s => s.name).join(' + ')}
                                 </Text>
                             </View>
                             <Text style={styles.appointmentTime}>{nextAppointment.time}</Text>
@@ -167,7 +167,7 @@ export default function Home() {
                                         {item.client?.user?.name}
                                     </Text>
                                     <Text style={styles.scheduleService}>
-                                        {item.service?.name}
+                                        {(item.services ?? []).map(s => s.name).join(' + ')}
                                     </Text>
                                 </View>
                                 <View style={[styles.badge, badgeStyle(item.appointment_status)]}>

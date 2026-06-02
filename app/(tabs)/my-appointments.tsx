@@ -182,12 +182,12 @@ export default function MyAppointments() {
                                 </View>
                                 <View style={styles.cardBody}>
                                     <Text style={styles.shopName}>{item.barber?.shop_name}</Text>
-                                    <Text style={styles.serviceName}>{item.service?.name}</Text>
+                                    <Text style={styles.serviceName}>{(item.services ?? []).map(s => s.name).join(' + ')}</Text>
                                     <View style={styles.metaRow}>
                                         <Ionicons name="time-outline" size={13} color="#888" />
                                         <Text style={styles.metaText}>{item.time}</Text>
                                         <Text style={styles.metaSep}>·</Text>
-                                        <Text style={styles.metaText}>R$ {Number(item.service?.price ?? 0).toFixed(2)}</Text>
+                                        <Text style={styles.metaText}>R$ {(item.services ?? []).reduce((s, svc) => s + Number(svc.price ?? 0), 0).toFixed(2)}</Text>
                                     </View>
                                 </View>
                                 <PulsingBadge status={item.appointment_status} />
