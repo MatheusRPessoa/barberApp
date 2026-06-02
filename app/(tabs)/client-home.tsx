@@ -90,7 +90,7 @@ export default function ClientHome() {
     const [activeBarberId, setActiveBarberId]     = useState('');
     const [activeBarberName, setActiveBarberName] = useState('');
     const [step, setStep]                         = useState<1|2|3>(1);
-    const [selectedService, setSelectedService]   = useState<Service | null>(null);
+    const [selectedServices, setSelectedServices] = useState<Service[]>([]);
     const [selectedDate, setSelectedDate]         = useState('');
     const [selectedTime, setSelectedTime]         = useState('');
     const [bookingFeedback, setBookingFeedback]   = useState('');
@@ -126,12 +126,20 @@ export default function ClientHome() {
         });
     })();
 
+    function toggleService(svc: Service) {
+        setSelectedServices(prev =>
+            prev.find(s => s.id === svc.id)
+                ? prev.filter(s => s.id !== svc.id)
+                : [...prev, svc]
+        );
+    }
+
     const bookingMutation = useMutation({
         mutationFn: () => appointmentService.create({
-            BARBER_ID:  activeBarberId,
-            SERVICE_ID: selectedService!.id,
-            DATE:       selectedDate,
-            TIME:       selectedTime,
+            BARBER_ID:   activeBarberId,
+            SERVICE_IDS: selectedServices.map(s => s.id),
+            DATE:        selectedDate,
+            TIME:        selectedTime,
         }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['appointments-mine'] });
@@ -149,7 +157,7 @@ export default function ClientHome() {
         setActiveBarberId(barberId);
         setActiveBarberName(barberName);
         setStep(1);
-        setSelectedService(null);
+        setSelectedServices([]);
         setSelectedDate('');
         setSelectedTime('');
         setBookingFeedback('');
@@ -157,7 +165,7 @@ export default function ClientHome() {
     }
 
     const confirmBooking = () => {
-        if (!selectedService || !selectedDate || !selectedTime) return;
+        if (!selectedServices.length || !selectedDate || !selectedTime) return;
         bookingMutation.mutate();
     };
 
@@ -346,25 +354,28 @@ export default function ClientHome() {
                                             Nenhum serviço cadastrado nesta barbearia.
                                         </Text>
                                     ) : (
-                                        services.map(s => (
-                                            <TouchableOpacity
-                                                key={s.id}
-                                                style={[styles.serviceItem, selectedService?.id === s.id && styles.serviceItemActive]}
-                                                onPress={() => setSelectedService(s)}
-                                            >
-                                                <View style={{ flex: 1 }}>
-                                                    <Text style={[styles.serviceItemName, selectedService?.id === s.id && styles.serviceItemNameActive]}>{s.name}</Text>
-                                                    <Text style={styles.serviceItemDuration}>{s.duration_minutes} min</Text>
-                                                </View>
-                                                <Text style={[styles.serviceItemPrice, selectedService?.id === s.id && styles.serviceItemNameActive]}>
-                                                    R$ {Number(s.price ?? 0).toFixed(2)}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        ))
+                                        services.map(s => {
+                                            const isSelected = !!selectedServices.find(x => x.id === s.id);
+                                            return (
+                                                <TouchableOpacity
+                                                    key={s.id}
+                                                    style={[styles.serviceItem, isSelected && styles.serviceItemActive]}
+                                                    onPress={() => toggleService(s)}
+                                                >
+                                                    <View style={{ flex: 1 }}>
+                                                        <Text style={[styles.serviceItemName, isSelected && styles.serviceItemNameActive]}>{s.name}</Text>
+                                                        <Text style={styles.serviceItemDuration}>{s.duration_minutes} min</Text>
+                                                    </View>
+                                                    <Text style={[styles.serviceItemPrice, isSelected && styles.serviceItemNameActive]}>
+                                                        R$ {Number(s.price ?? 0).toFixed(2)}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            );
+                                        })
                                     )}
                                     <TouchableOpacity
-                                        style={[styles.nextBtn, !selectedService && styles.nextBtnDisabled]}
-                                        disabled={!selectedService}
+                                        style={[styles.nextBtn, !selectedServices.length && styles.nextBtnDisabled]}
+                                        disabled={!selectedServices.length}
                                         onPress={() => setStep(2)}
                                     >
                                         <Text style={styles.nextBtnText}>Próximo</Text>
@@ -442,8 +453,8 @@ export default function ClientHome() {
                                         </View>
                                         <View style={styles.summaryRow}>
                                             <Ionicons name="cut-outline" size={18} color="#ffb300" />
-                                            <Text style={styles.summaryLabel}>Serviço</Text>
-                                            <Text style={styles.summaryValue}>{selectedService?.name}</Text>
+                                            <Text style={styles.summaryLabel}>Serviços</Text>
+                                            <Text style={styles.summaryValue}>{selectedServices.map(s => s.name).join(' + ')}</Text>
                                         </View>
                                         <View style={styles.summaryRow}>
                                             <Ionicons name="calendar-outline" size={18} color="#ffb300" />
@@ -459,7 +470,7 @@ export default function ClientHome() {
                                             <Ionicons name="cash-outline" size={18} color="#ffb300" />
                                             <Text style={styles.summaryLabel}>Valor</Text>
                                             <Text style={[styles.summaryValue, { color: '#28a745', fontWeight: '700' }]}>
-                                                R$ {Number(selectedService?.price ?? 0).toFixed(2)}
+                                                R$ {selectedServices.reduce((sum, s) => sum + Number(s.price ?? 0), 0).toFixed(2)}
                                             </Text>
                                         </View>
                                     </View>

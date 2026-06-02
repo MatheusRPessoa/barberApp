@@ -17,7 +17,7 @@ export interface Appointment {
     id: string;
     barber: { id: string; shop_name: string };
     client: AppointmentClient;
-    service: AppointmentService;
+    services: AppointmentService[];
     date: string;
     time: string;
     appointment_status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
@@ -51,8 +51,8 @@ export const appointmentService = {
     updateStatus: (id: string, STATUS: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED') =>
         api.patch<void>(`/appointments/${id}/status`, { STATUS }),
 
-    create: (data: { BARBER_ID: string; SERVICE_ID: string; DATE: string; TIME: string }) =>
-        api.post<Appointment>('/appointments', data),
+    create: (data: { BARBER_ID: string; SERVICE_IDS: string[]; DATE: string; TIME: string }) =>
+    api.post<Appointment>('/appointments', data),
 
     listMine: () =>
         api.get<Appointment[]>('/appointments/mine'),
