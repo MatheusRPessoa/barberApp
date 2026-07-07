@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://localhost:3001/api';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3001/api';
 
 async function tryRefreshToken(): Promise<string | null> {
     try {
@@ -8,15 +8,15 @@ async function tryRefreshToken(): Promise<string | null> {
         if (!refreshToken) return null;
 
         const res = await fetch(`${BASE_URL}/auth/refresh`, {
-            method:  'POST',
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ refresh_token: refreshToken }),
+            body: JSON.stringify({ refresh_token: refreshToken }),
         });
 
         if (!res.ok) return null;
 
         const data = await res.json();
-        const newAccess  = data.access_token  ?? data.accessToken;
+        const newAccess = data.access_token ?? data.accessToken;
         const newRefresh = data.refresh_token ?? data.refreshToken;
 
         if (!newAccess) return null;
@@ -30,11 +30,7 @@ async function tryRefreshToken(): Promise<string | null> {
     }
 }
 
-async function request<T>(
-    path: string,
-    options: RequestInit = {},
-    useAuth = true
-): Promise<T> {
+async function request<T>(path: string, options: RequestInit = {}, useAuth = true): Promise<T> {
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         ...(options.headers as Record<string, string>),
@@ -68,12 +64,9 @@ async function request<T>(
 }
 
 export const api = {
-    get: <T>(path: string, useAuth = true) =>
-        request<T>(path, { method: 'GET' }, useAuth),
+    get: <T>(path: string, useAuth = true) => request<T>(path, { method: 'GET' }, useAuth),
     post: <T>(path: string, body: unknown, useAuth = true) =>
         request<T>(path, { method: 'POST', body: JSON.stringify(body) }, useAuth),
-    patch: <T>(path: string, body: unknown) =>
-        request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
-    delete: <T>(path: string) =>
-        request<T>(path, { method: 'DELETE' }),
+    patch: <T>(path: string, body: unknown) => request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }),
+    delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
 };
