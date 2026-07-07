@@ -7,31 +7,28 @@ import { useNotificationsContext } from '@/context/NotificationsContext';
 
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
-        shouldShowAlert:  true,
-        shouldPlaySound:  true,
-        shouldSetBadge:   true,
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
         shouldShowBanner: true,
-        shouldShowList:   true,
+        shouldShowList: true,
     }),
 });
 async function registerPushToken() {
     const { status: existing } = await Notifications.getPermissionsAsync();
-    const { status } = existing === 'granted'
-        ? { status: existing }
-        : await Notifications.requestPermissionsAsync();
+    const { status } = existing === 'granted' ? { status: existing } : await Notifications.requestPermissionsAsync();
 
     if (status !== 'granted') return;
 
     if (Platform.OS === 'android') {
         await Notifications.setNotificationChannelAsync('default', {
-            name:       'default',
+            name: 'default',
             importance: Notifications.AndroidImportance.MAX,
-            sound:      'default',
+            sound: 'default',
         });
     }
 
-    const projectId = Constants.expoConfig?.extra?.eas?.projectId
-        ?? Constants.easConfig?.projectId;
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
 
     if (!projectId) {
         console.warn('projectId não encontrado — configure no app.json ou eas.json');
@@ -45,7 +42,7 @@ async function registerPushToken() {
 
 export function useNotifications(enabled: boolean) {
     const { addNotification } = useNotificationsContext();
-    const notifListener    = useRef<Notifications.EventSubscription | undefined>(undefined);
+    const notifListener = useRef<Notifications.EventSubscription | undefined>(undefined);
     const responseListener = useRef<Notifications.EventSubscription | undefined>(undefined);
 
     useEffect(() => {
@@ -53,15 +50,15 @@ export function useNotifications(enabled: boolean) {
 
         registerPushToken();
 
-        notifListener.current = Notifications.addNotificationReceivedListener(notification => {
-            addNotification({                                // ← substituir o console.log
+        notifListener.current = Notifications.addNotificationReceivedListener((notification) => {
+            addNotification({
                 title: notification.request.content.title ?? 'BarberApp',
-                body:  notification.request.content.body  ?? '',
-                data:  notification.request.content.data as Record<string, unknown>,
+                body: notification.request.content.body ?? '',
+                data: notification.request.content.data as Record<string, unknown>,
             });
         });
 
-        responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+        responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
             console.log('Usuário tocou na notificação:', response);
         });
 
@@ -69,5 +66,5 @@ export function useNotifications(enabled: boolean) {
             notifListener.current?.remove();
             responseListener.current?.remove();
         };
-    }, [enabled]);
+    }, [enabled, addNotification]);
 }

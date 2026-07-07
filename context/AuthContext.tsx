@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { useCallback, createContext, useContext, useEffect, useState } from 'react';
 import { authService, RegisterData, User } from '@/services/authService';
 
 interface AuthContextData {
@@ -21,24 +21,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true);
     const [pendingMessage, setPendingMessage] = useState('');
     const router = useRouter();
+    const clearPendingMessage = useCallback(() => setPendingMessage(''), []);
 
     useEffect(() => {
+        async function restoreSession() {
+            try {
+                const token = await AsyncStorage.getItem('accessToken');
+                if (token) {
+                    const userData = await authService.me();
+                    setUser(userData);
+                }
+            } catch {
+                await clearTokens();
+            } finally {
+                setLoading(false);
+            }
+        }
         restoreSession();
     }, []);
-
-    async function restoreSession() {
-        try {
-            const token = await AsyncStorage.getItem('accessToken');
-            if (token) {
-                const userData = await authService.me();
-                setUser(userData);
-            }
-        } catch {
-            await clearTokens();
-        } finally {
-            setLoading(false);
-        }
-    }
 
     async function saveTokens(accessToken: string, refreshToken: string) {
         await AsyncStorage.setItem('accessToken', accessToken);
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     async function register(data: RegisterData) {
         await authService.register(data);
-        setPendingMessage('Conta criada com sucesso! Faça login para continuar')
+        setPendingMessage('Conta criada com sucesso! Faça login para continuar');
         router.replace({ pathname: '/login', params: { registered: 'true' } });
     }
 
@@ -79,21 +79,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(userData);
     }
 
-    function clearPendingMessage() {
-        setPendingMessage('');
-    }
-
     return (
-        <AuthContext.Provider value={{
-            user,
-            loading,
-            login,
-            register,
-            logout,
-            refreshUser,
-            pendingMessage,
-            clearPendingMessage
-        }}>
+        <AuthContext.Provider
+            value={{
+                user,
+                loading,
+                login,
+                register,
+                logout,
+                refreshUser,
+                pendingMessage,
+                clearPendingMessage,
+            }}
+        >
             {children}
         </AuthContext.Provider>
     );
