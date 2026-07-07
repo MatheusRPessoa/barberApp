@@ -3,11 +3,14 @@ import { api } from './api';
 export interface BarberShop {
     id: string;
     shop_name: string;
-    rating: number;
+    rating: number | null;
     street: string;
+    number: string;
     city: string;
     state: string;
     services: Service[];
+    distance_km?: number | null;
+    is_favorite?: boolean;
 }
 
 export interface Service {
@@ -30,24 +33,21 @@ export interface UpdateServiceData {
 }
 
 export const barberService = {
-    listBarbers: () =>
-        api.get<BarberShop[]>('/barbers', false),
+    listBarbers: (coords?: { lat: number; lng: number }) => {
+        const qs = coords ? `?lat=${coords.lat}&lng=${coords.lng}` : '';
+        return api.get<BarberShop[]>(`/barbers${qs}`);
+    },
 
-    listBarberServices: (barberId: string) =>
-        api.get<Service[]>(`/barbers/${barberId}/services`, false),
+    listBarberServices: (barberId: string) => api.get<Service[]>(`/barbers/${barberId}/services`, false),
 
     getAvailableSlots: (barberId: string, date: string) =>
         api.get<{ date: string; available: string[] }>(`/barbers/${barberId}/available-slots?date=${date}`, false),
 
-    listMyServices: () =>
-        api.get<Service[]>('/services/mine'),
+    listMyServices: () => api.get<Service[]>('/services/mine'),
 
-    createService: (data: CreateServiceData) =>
-        api.post<Service>('/services', data),
+    createService: (data: CreateServiceData) => api.post<Service>('/services', data),
 
-    updateService: (id: string, data: UpdateServiceData) =>
-        api.patch<Service>(`/services/${id}`, data),
+    updateService: (id: string, data: UpdateServiceData) => api.patch<Service>(`/services/${id}`, data),
 
-    deleteService: (id: string) =>
-        api.delete<void>(`/services/${id}`),
+    deleteService: (id: string) => api.delete<void>(`/services/${id}`),
 };
