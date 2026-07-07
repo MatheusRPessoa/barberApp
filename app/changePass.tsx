@@ -1,6 +1,5 @@
-import { useRouter } from "expo-router";
-import { Button, StyleSheet, Text, View } from "react-native";
-
+import { useRouter } from 'expo-router';
+import { Button, StyleSheet, Text, View } from 'react-native';
 
 export default function ChangePass() {
     const router = useRouter();
@@ -9,12 +8,10 @@ export default function ChangePass() {
         <View style={styles.container}>
             <Text style={styles.text}>Página mudar senha</Text>
 
-            <Button title="voltar" onPress={() => router.back()}/>
+            <Button title="voltar" onPress={() => router.back()} />
         </View>
-
-    )
+    );
 }
-
 
 const styles = StyleSheet.create({
     container: {
@@ -26,5 +23,5 @@ const styles = StyleSheet.create({
     text: {
         fontSize: 24,
         marginTop: 20,
-    }
-})
+    },
+});

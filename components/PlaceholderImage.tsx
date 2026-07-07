@@ -1,5 +1,5 @@
-import React from "react";
-import { Image, StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+import React from 'react';
+import { Image, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
 interface Props {
     style?: StyleProp<ViewStyle>;
@@ -21,5 +21,5 @@ export default function PlaceHolderImage({ style, logoSize = 28, children }: Pro
 }
 
 const styles = StyleSheet.create({
-    container: { alignItems: 'center', justifyContent: 'center' }
+    container: { alignItems: 'center', justifyContent: 'center' },
 });

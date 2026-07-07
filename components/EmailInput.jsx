@@ -1,11 +1,11 @@
-import React from "react";
-import { StyleSheet, Text, TextInput } from "react-native";
+import React from 'react';
+import { StyleSheet, Text, TextInput } from 'react-native';
 
 export default function EmailInput({ value, onChangeText }) {
     return (
         <>
             <Text style={styles.label}>Email</Text>
-            <TextInput   
+            <TextInput
                 placeholder="Digite seu email"
                 value={value}
                 onChangeText={onChangeText}
@@ -14,13 +14,13 @@ export default function EmailInput({ value, onChangeText }) {
                 autoCapitalize="none"
             />
         </>
-    )   
+    );
 }
 
 const styles = StyleSheet.create({
     label: {
         marginBottom: 5,
-        fontWeight:'bold',
+        fontWeight: 'bold',
     },
     input: {
         borderWidth: 1,
@@ -28,5 +28,5 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         padding: 10,
         marginBottom: 10,
-    }
-})
+    },
+});

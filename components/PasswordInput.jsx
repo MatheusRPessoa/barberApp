@@ -1,41 +1,33 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from "react";
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import React, { useState } from 'react';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-
-export default function PasswordInput({ value, onChangeText }) {    
+export default function PasswordInput({ value, onChangeText }) {
     const [mostrarSenha, setMostrarSenha] = useState(false);
 
     return (
         <>
             <Text style={styles.label}>Senha</Text>
             <View style={styles.inputWrapper}>
-                <TextInput 
+                <TextInput
                     placeholder="Digite sua senha"
                     value={value}
                     onChangeText={onChangeText}
                     secureTextEntry={!mostrarSenha}
                     style={styles.input}
                 />
-                <TouchableOpacity
-                    onPress={ () => setMostrarSenha(!mostrarSenha)}
-                    style={styles.iconContainer}
-                >
-                    <Ionicons 
-                        name={mostrarSenha ? "eye-off" : "eye"}
-                        size={20}
-                        color="gray"
-                    />
+                <TouchableOpacity onPress={() => setMostrarSenha(!mostrarSenha)} style={styles.iconContainer}>
+                    <Ionicons name={mostrarSenha ? 'eye-off' : 'eye'} size={20} color="gray" />
                 </TouchableOpacity>
             </View>
         </>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
     label: {
         marginBottom: 5,
-        fontWeight:'bold',
+        fontWeight: 'bold',
     },
     input: {
         borderWidth: 1,
@@ -49,17 +41,17 @@ const styles = StyleSheet.create({
         position: 'absolute',
         right: 10,
         top: '40%',
-        transform: [{ translateY: -10 }] // Centraliza verticalmente 
+        transform: [{ translateY: -10 }], // Centraliza verticalmente
     },
     inputWrapper: {
         position: 'relative',
-        width: '100%'
-    },  
+        width: '100%',
+    },
     container: {
         flexDirection: 'row',
         borderWidth: '#ccc',
         borderRadius: 8,
         alignItems: 'center',
         marginBottom: 10,
-    }
-})
+    },
+});

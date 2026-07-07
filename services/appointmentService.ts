@@ -1,6 +1,5 @@
 import { api } from './api';
 
-
 export interface AppointmentClient {
     id: string;
     user: { id: string; name: string; email: string };
@@ -39,21 +38,19 @@ function toDateString(date: Date): string {
 export const appointmentService = {
     list: (params: ListParams = {}) => {
         const query = new URLSearchParams();
-        if (params.date)   query.append('date', params.date);
+        if (params.date) query.append('date', params.date);
         if (params.status) query.append('status', params.status);
         const qs = query.toString();
         return api.get<Appointment[]>(`/appointments${qs ? `?${qs}` : ''}`);
     },
 
-    listToday: () =>
-        appointmentService.list({ date: toDateString(new Date()) }),
+    listToday: () => appointmentService.list({ date: toDateString(new Date()) }),
 
     updateStatus: (id: string, STATUS: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED') =>
         api.patch<void>(`/appointments/${id}/status`, { STATUS }),
 
     create: (data: { BARBER_ID: string; SERVICE_IDS: string[]; DATE: string; TIME: string }) =>
-    api.post<Appointment>('/appointments', data),
+        api.post<Appointment>('/appointments', data),
 
-    listMine: () =>
-        api.get<Appointment[]>('/appointments/mine'),
+    listMine: () => api.get<Appointment[]>('/appointments/mine'),
 };

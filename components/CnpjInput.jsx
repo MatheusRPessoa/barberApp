@@ -1,22 +1,17 @@
-import React from "react";
-import { StyleSheet, Text, TextInput } from "react-native";
+import React from 'react';
+import { StyleSheet, Text, TextInput } from 'react-native';
 
-export default function CpnjInput({ value, onChangeText}) {
+export default function CpnjInput({ value, onChangeText }) {
     return (
         <>
             <Text style={styles.label}>CNPJ</Text>
-            <TextInput 
-                placeholder="Digite seu CNPJ"
-                style={styles.input}
-                value={value}
-                onChangeText={onChangeText}
-            />
+            <TextInput placeholder="Digite seu CNPJ" style={styles.input} value={value} onChangeText={onChangeText} />
         </>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
-    container :{
+    container: {
         marginBottom: 10,
     },
     label: {
@@ -30,4 +25,4 @@ const styles = StyleSheet.create({
         padding: 10,
         marginBottom: 10,
     },
-})
+});
