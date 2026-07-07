@@ -3,37 +3,29 @@ import { Appointment, appointmentService } from '@/services/appointmentService';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef, useState } from 'react';
-import {
-    Animated,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
+import { Animated, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNotificationsContext } from '@/context/NotificationsContext';
 
 type StatusFilter = 'ALL' | 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
 
 const FILTERS: { label: string; value: StatusFilter }[] = [
-    { label: 'Todos',      value: 'ALL' },
-    { label: 'Pendente',   value: 'PENDING' },
+    { label: 'Todos', value: 'ALL' },
+    { label: 'Pendente', value: 'PENDING' },
     { label: 'Confirmado', value: 'CONFIRMED' },
-    { label: 'Concluído',  value: 'COMPLETED' },
-    { label: 'Cancelado',  value: 'CANCELLED' },
+    { label: 'Concluído', value: 'COMPLETED' },
+    { label: 'Cancelado', value: 'CANCELLED' },
 ];
 
 const STATUS_LABEL: Record<Appointment['appointment_status'], string> = {
-    PENDING:   'Pendente',
+    PENDING: 'Pendente',
     CONFIRMED: 'Confirmado',
     COMPLETED: 'Concluído',
     CANCELLED: 'Cancelado',
 };
 
 const STATUS_COLOR: Record<Appointment['appointment_status'], string> = {
-    PENDING:   C.primary,
+    PENDING: C.primary,
     CONFIRMED: C.info,
     COMPLETED: C.success,
     CANCELLED: C.danger,
@@ -48,39 +40,39 @@ function PulsingBadge({ status }: { status: Appointment['appointment_status'] })
         const anim = Animated.loop(
             Animated.sequence([
                 Animated.timing(scale, { toValue: 1.1, duration: 700, useNativeDriver: true }),
-                Animated.timing(scale, { toValue: 1,   duration: 700, useNativeDriver: true }),
+                Animated.timing(scale, { toValue: 1, duration: 700, useNativeDriver: true }),
             ])
         );
         anim.start();
         return () => anim.stop();
-    }, [active]);
+    }, [active, scale]);
 
     return (
-        <Animated.View style={[
-            styles.badge,
-            { backgroundColor: STATUS_COLOR[status] + '22', transform: [{ scale }] },
-        ]}>
+        <Animated.View style={[styles.badge, { backgroundColor: STATUS_COLOR[status] + '22', transform: [{ scale }] }]}>
             {active && <View style={[styles.badgeDot, { backgroundColor: STATUS_COLOR[status] }]} />}
-            <Text style={[styles.badgeText, { color: STATUS_COLOR[status] }]}>
-                {STATUS_LABEL[status]}
-            </Text>
+            <Text style={[styles.badgeText, { color: STATUS_COLOR[status] }]}>{STATUS_LABEL[status]}</Text>
         </Animated.View>
     );
 }
 
 export default function MyAppointments() {
     const [activeFilter, setActiveFilter] = useState<StatusFilter>('ALL');
-    const [changedIds, setChangedIds]     = useState<Set<string>>(new Set());
-    const prevStatusRef                   = useRef<Record<string, string>>({});
+    const [changedIds, setChangedIds] = useState<Set<string>>(new Set());
+    const prevStatusRef = useRef<Record<string, string>>({});
     const { addNotification } = useNotificationsContext();
 
     const syncAnim = useRef(new Animated.Value(0.3)).current;
     const syncLoop = useRef<Animated.CompositeAnimation | null>(null);
 
-    const { data: appointments = [], isLoading: loading, isFetching, refetch } = useQuery<Appointment[]>({
+    const {
+        data: appointments = [],
+        isLoading: loading,
+        isFetching,
+        refetch,
+    } = useQuery<Appointment[]>({
         queryKey: ['appointments-mine'],
-        queryFn:  () => appointmentService.listMine(),
-        refetchInterval:      15_000,
+        queryFn: () => appointmentService.listMine(),
+        refetchInterval: 15_000,
         refetchOnWindowFocus: true,
     });
 
@@ -88,7 +80,7 @@ export default function MyAppointments() {
         if (isFetching && !loading) {
             syncLoop.current = Animated.loop(
                 Animated.sequence([
-                    Animated.timing(syncAnim, { toValue: 1,   duration: 500, useNativeDriver: true }),
+                    Animated.timing(syncAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
                     Animated.timing(syncAnim, { toValue: 0.3, duration: 500, useNativeDriver: true }),
                 ])
             );
@@ -97,7 +89,7 @@ export default function MyAppointments() {
             syncLoop.current?.stop();
             Animated.timing(syncAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start();
         }
-    }, [isFetching, loading]);
+    }, [isFetching, loading, syncAnim]);
 
     useEffect(() => {
         const prev = prevStatusRef.current;
@@ -107,8 +99,8 @@ export default function MyAppointments() {
                 changed.add(a.id);
                 addNotification({
                     title: 'Agendamento atualizado',
-                    body:  `${a.barber?.shop_name ?? 'Barbearia'} — status: ${STATUS_LABEL[a.appointment_status]}`,
-                    data:  { appointmentId: a.id },
+                    body: `${a.barber?.shop_name ?? 'Barbearia'} — status: ${STATUS_LABEL[a.appointment_status]}`,
+                    data: { appointmentId: a.id },
                 });
             }
             prev[a.id] = a.appointment_status;
@@ -117,15 +109,15 @@ export default function MyAppointments() {
             setChangedIds(changed);
             setTimeout(() => setChangedIds(new Set()), 3000);
         }
-    }, [appointments]);
+    }, [appointments, addNotification]);
 
-    const filtered = activeFilter === 'ALL'
-        ? appointments
-        : appointments.filter((a: Appointment) => a.appointment_status === activeFilter);
+    const filtered =
+        activeFilter === 'ALL'
+            ? appointments
+            : appointments.filter((a: Appointment) => a.appointment_status === activeFilter);
 
     return (
-        <SafeAreaView style={styles.safe}>
-
+        <SafeAreaView style={styles.safe} edges={['top']}>
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Meus Agendamentos</Text>
                 <Animated.View style={[styles.syncDot, { opacity: syncAnim }]}>
@@ -136,7 +128,7 @@ export default function MyAppointments() {
 
             <View style={styles.filtersWrapper}>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersRow}>
-                    {FILTERS.map(f => (
+                    {FILTERS.map((f) => (
                         <TouchableOpacity
                             key={f.value}
                             style={[styles.filterChip, activeFilter === f.value && styles.filterChipActive]}
@@ -166,7 +158,7 @@ export default function MyAppointments() {
                         <Text style={styles.emptyText}>Nenhum agendamento encontrado.</Text>
                     </View>
                 ) : (
-                    filtered.map(item => {
+                    filtered.map((item) => {
                         const justChanged = changedIds.has(item.id);
                         return (
                             <View key={item.id} style={[styles.card, justChanged && styles.cardChanged]}>
@@ -180,18 +172,40 @@ export default function MyAppointments() {
                                     <View style={styles.dateBox}>
                                         <Text style={styles.dateDay}>{item.date?.split('-')[2]}</Text>
                                         <Text style={styles.dateMonth}>
-                                            {['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][parseInt(item.date?.split('-')[1]) - 1]}
+                                            {
+                                                [
+                                                    'Jan',
+                                                    'Fev',
+                                                    'Mar',
+                                                    'Abr',
+                                                    'Mai',
+                                                    'Jun',
+                                                    'Jul',
+                                                    'Ago',
+                                                    'Set',
+                                                    'Out',
+                                                    'Nov',
+                                                    'Dez',
+                                                ][parseInt(item.date?.split('-')[1]) - 1]
+                                            }
                                         </Text>
                                     </View>
                                 </View>
                                 <View style={styles.cardBody}>
                                     <Text style={styles.shopName}>{item.barber?.shop_name}</Text>
-                                    <Text style={styles.serviceName}>{(item.services ?? []).map(s => s.name).join(' + ')}</Text>
+                                    <Text style={styles.serviceName}>
+                                        {(item.services ?? []).map((s) => s.name).join(' + ')}
+                                    </Text>
                                     <View style={styles.metaRow}>
                                         <Ionicons name="time-outline" size={13} color={C.textMuted} />
                                         <Text style={styles.metaText}>{item.time}</Text>
                                         <Text style={styles.metaSep}>·</Text>
-                                        <Text style={styles.metaText}>R$ {(item.services ?? []).reduce((s, svc) => s + Number(svc.price ?? 0), 0).toFixed(2)}</Text>
+                                        <Text style={styles.metaText}>
+                                            R${' '}
+                                            {(item.services ?? [])
+                                                .reduce((s, svc) => s + Number(svc.price ?? 0), 0)
+                                                .toFixed(2)}
+                                        </Text>
                                     </View>
                                 </View>
                                 <PulsingBadge status={item.appointment_status} />
@@ -205,42 +219,92 @@ export default function MyAppointments() {
 }
 
 const styles = StyleSheet.create({
-    safe:             { flex: 1, backgroundColor: C.bgPage },
-    header:           { backgroundColor: C.bgSurface, paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.borderLight, flexDirection: 'row', alignItems: 'center', gap: 8 },
-    headerTitle:      { fontSize: 20, fontWeight: 'bold', color: C.textPrimary, flex: 1 },
-    syncDot:          { width: 10, height: 10, borderRadius: 5, alignItems: 'center', justifyContent: 'center' },
-    syncDotInner:     { width: 10, height: 10, borderRadius: 5, backgroundColor: C.info },
-    syncLabel:        { fontSize: 11, color: C.info },
+    safe: { flex: 1, backgroundColor: C.bgPage },
+    header: {
+        backgroundColor: C.bgSurface,
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: C.borderLight,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    headerTitle: { fontSize: 20, fontWeight: 'bold', color: C.textPrimary, flex: 1 },
+    syncDot: { width: 10, height: 10, borderRadius: 5, alignItems: 'center', justifyContent: 'center' },
+    syncDotInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: C.info },
+    syncLabel: { fontSize: 11, color: C.info },
 
-    filtersWrapper:   { backgroundColor: C.bgSurface, borderBottomWidth: 1, borderBottomColor: C.borderLight },
-    filtersRow:       { paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center' },
-    filterChip:       { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: C.bgPage, borderWidth: 1, borderColor: C.borderLight, marginRight: 8 },
+    filtersWrapper: { backgroundColor: C.bgSurface, borderBottomWidth: 1, borderBottomColor: C.borderLight },
+    filtersRow: { paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', alignItems: 'center' },
+    filterChip: {
+        paddingHorizontal: 14,
+        paddingVertical: 6,
+        borderRadius: 20,
+        backgroundColor: C.bgPage,
+        borderWidth: 1,
+        borderColor: C.borderLight,
+        marginRight: 8,
+    },
     filterChipActive: { backgroundColor: C.textPrimary, borderColor: C.textPrimary },
-    filterText:       { fontSize: 13, color: C.textSecondary },
+    filterText: { fontSize: 13, color: C.textSecondary },
     filterTextActive: { color: C.bgSurface, fontWeight: '600' },
 
-    listScroll:       { flex: 1 },
-    scroll:           { padding: 16, paddingBottom: 32 },
-    emptyContainer:   { alignItems: 'center', marginTop: 60 },
-    emptyText:        { color: C.textFaint, fontSize: 14, marginTop: 10 },
+    listScroll: { flex: 1 },
+    scroll: { padding: 16, paddingBottom: 32 },
+    emptyContainer: { alignItems: 'center', marginTop: 60 },
+    emptyText: { color: C.textFaint, fontSize: 14, marginTop: 10 },
 
-    card:             { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 12, padding: 14, marginBottom: 12, gap: 12 },
-    cardChanged:      { borderWidth: 2, borderColor: C.info },
-    changedBanner:    { position: 'absolute', top: -1, left: 12, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.infoBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-    changedText:      { fontSize: 11, color: C.info, fontWeight: '600' },
+    card: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: C.bgSurface,
+        borderRadius: 12,
+        padding: 14,
+        marginBottom: 12,
+        gap: 12,
+    },
+    cardChanged: { borderWidth: 2, borderColor: C.info },
+    changedBanner: {
+        position: 'absolute',
+        top: -1,
+        left: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: C.infoBg,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 6,
+    },
+    changedText: { fontSize: 11, color: C.info, fontWeight: '600' },
 
-    cardLeft:         {},
-    dateBox:          { width: 48, height: 52, backgroundColor: C.bgPage, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-    dateDay:          { fontSize: 20, fontWeight: 'bold', color: C.textPrimary },
-    dateMonth:        { fontSize: 11, color: C.textMuted, marginTop: 1 },
-    cardBody:         { flex: 1 },
-    shopName:         { fontSize: 15, fontWeight: 'bold', color: C.textPrimary },
-    serviceName:      { fontSize: 13, color: C.textSecondary, marginTop: 2 },
-    metaRow:          { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-    metaText:         { fontSize: 12, color: C.textMuted },
-    metaSep:          { fontSize: 12, color: C.borderInput },
+    cardLeft: {},
+    dateBox: {
+        width: 48,
+        height: 52,
+        backgroundColor: C.bgPage,
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    dateDay: { fontSize: 20, fontWeight: 'bold', color: C.textPrimary },
+    dateMonth: { fontSize: 11, color: C.textMuted, marginTop: 1 },
+    cardBody: { flex: 1 },
+    shopName: { fontSize: 15, fontWeight: 'bold', color: C.textPrimary },
+    serviceName: { fontSize: 13, color: C.textSecondary, marginTop: 2 },
+    metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+    metaText: { fontSize: 12, color: C.textMuted },
+    metaSep: { fontSize: 12, color: C.borderInput },
 
-    badge:            { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, gap: 5 },
-    badgeDot:         { width: 7, height: 7, borderRadius: 4 },
-    badgeText:        { fontSize: 11, fontWeight: '700' },
+    badge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 8,
+        gap: 5,
+    },
+    badgeDot: { width: 7, height: 7, borderRadius: 4 },
+    badgeText: { fontSize: 11, fontWeight: '700' },
 });

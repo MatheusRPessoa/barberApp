@@ -38,14 +38,21 @@ export default function Home() {
 
     const today = toDateString(new Date());
 
-    const { data: appointments = [], isLoading: loading, isRefetching, refetch } = useQuery<Appointment[]>({
+    const {
+        data: appointments = [],
+        isLoading: loading,
+        isRefetching,
+        refetch,
+    } = useQuery<Appointment[]>({
         queryKey: ['appointments-all'],
-        queryFn:  () => appointmentService.list(),
-        refetchInterval:      30_000,
+        queryFn: () => appointmentService.list(),
+        refetchInterval: 30_000,
         refetchOnWindowFocus: true,
     });
 
-    const onRefresh = () => { refetch(); };
+    const onRefresh = () => {
+        refetch();
+    };
 
     async function handleUpdateStatus(id: string, status: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED') {
         try {
@@ -56,17 +63,14 @@ export default function Home() {
         }
     }
 
-    const todayAppointments = appointments.filter(a => a.date === today);
+    const todayAppointments = appointments.filter((a) => a.date === today);
 
     const todayEarnings = todayAppointments
-        .filter(a => a.appointment_status === 'COMPLETED')
+        .filter((a) => a.appointment_status === 'COMPLETED')
         .reduce((sum, a) => sum + (a.services ?? []).reduce((s, svc) => s + Number(svc.price ?? 0), 0), 0);
 
     const upcoming = appointments
-        .filter(a =>
-            a.date >= today &&
-            (a.appointment_status === 'PENDING' || a.appointment_status === 'CONFIRMED')
-        )
+        .filter((a) => a.date >= today && (a.appointment_status === 'PENDING' || a.appointment_status === 'CONFIRMED'))
         .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 
     const nextAppointment = upcoming[0];
@@ -75,21 +79,24 @@ export default function Home() {
         ({ CONFIRMED: 'Confirmado', PENDING: 'Pendente', COMPLETED: 'Concluído', CANCELLED: 'Cancelado' })[s];
 
     const badgeStyle = (s: Appointment['appointment_status']) =>
-        s === 'COMPLETED' ? styles.badgeGreen
-        : s === 'CONFIRMED' ? styles.badgeBlue
-        : s === 'CANCELLED' ? styles.badgeGrey
-        : styles.badgeOrange;
+        s === 'COMPLETED'
+            ? styles.badgeGreen
+            : s === 'CONFIRMED'
+              ? styles.badgeBlue
+              : s === 'CANCELLED'
+                ? styles.badgeGrey
+                : styles.badgeOrange;
 
     if (loading) {
         return (
-            <SafeAreaView style={styles.safeArea}>
+            <SafeAreaView style={styles.safeArea} edges={['top']}>
                 <ActivityIndicator style={{ flex: 1 }} size="large" color={C.primary} />
             </SafeAreaView>
         );
     }
 
     return (
-        <SafeAreaView style={styles.safeArea}>
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
             <ScrollView
                 contentContainerStyle={styles.scroll}
                 showsVerticalScrollIndicator={false}
@@ -113,9 +120,7 @@ export default function Home() {
                     </View>
                     <View style={styles.statCard}>
                         <Text style={styles.statLabel}>Ganhos hoje</Text>
-                        <Text style={styles.statValue}>
-                            R$ {todayEarnings.toFixed(2)}
-                        </Text>
+                        <Text style={styles.statValue}>R$ {todayEarnings.toFixed(2)}</Text>
                     </View>
                 </View>
 
@@ -126,13 +131,11 @@ export default function Home() {
                             <Text style={styles.infoOrange}>{nextAppointment.time}</Text>
                         </View>
                         <View style={styles.appointmentRow}>
-                            <PlaceHolderImage style={styles.avatarSm} logoSize={16}/>
+                            <PlaceHolderImage style={styles.avatarSm} logoSize={16} />
                             <View style={styles.appointmentInfo}>
-                                <Text style={styles.appointmentName}>
-                                    {nextAppointment.client?.user?.name}
-                                </Text>
+                                <Text style={styles.appointmentName}>{nextAppointment.client?.user?.name}</Text>
                                 <Text style={styles.appointmentService}>
-                                    {nextAppointment.services?.map(s => s.name).join(' + ')}
+                                    {nextAppointment.services?.map((s) => s.name).join(' + ')}
                                 </Text>
                             </View>
                             <Text style={styles.appointmentTime}>{nextAppointment.time}</Text>
@@ -179,7 +182,7 @@ export default function Home() {
                     {upcoming.length === 0 ? (
                         <Text style={styles.emptyText}>Nenhum agendamento próximo</Text>
                     ) : (
-                        upcoming.slice(0, 4).map(item => (
+                        upcoming.slice(0, 4).map((item) => (
                             <View key={item.id} style={styles.scheduleItem}>
                                 <View style={styles.scheduleTimeCol}>
                                     {item.date !== today && (
@@ -190,23 +193,18 @@ export default function Home() {
                                     <Text style={styles.scheduleTime}>{item.time}</Text>
                                 </View>
                                 <View style={styles.scheduleInfo}>
-                                    <Text style={styles.scheduleName}>
-                                        {item.client?.user?.name}
-                                    </Text>
+                                    <Text style={styles.scheduleName}>{item.client?.user?.name}</Text>
                                     <Text style={styles.scheduleService}>
-                                        {(item.services ?? []).map(s => s.name).join(' + ')}
+                                        {(item.services ?? []).map((s) => s.name).join(' + ')}
                                     </Text>
                                 </View>
                                 <View style={[styles.badge, badgeStyle(item.appointment_status)]}>
-                                    <Text style={styles.badgeText}>
-                                        {statusLabel(item.appointment_status)}
-                                    </Text>
+                                    <Text style={styles.badgeText}>{statusLabel(item.appointment_status)}</Text>
                                 </View>
                             </View>
                         ))
                     )}
                 </View>
-
             </ScrollView>
 
             <View style={styles.footer}>
@@ -220,7 +218,12 @@ export default function Home() {
                 </TouchableOpacity>
             </View>
 
-            <Modal visible={modalVisible} animationType="slide" transparent>
+            <Modal
+                visible={modalVisible}
+                animationType="slide"
+                onRequestClose={() => setModalVisible(false)}
+                transparent
+            >
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalBox}>
                         <Text style={styles.modalTitle}>Novo Agendamento</Text>
@@ -250,10 +253,7 @@ export default function Home() {
                         />
 
                         <View style={styles.modalButtons}>
-                            <TouchableOpacity
-                                style={styles.modalBtnCancel}
-                                onPress={() => setModalVisible(false)}
-                            >
+                            <TouchableOpacity style={styles.modalBtnCancel} onPress={() => setModalVisible(false)}>
                                 <Text style={styles.modalBtnCancelText}>Cancelar</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
@@ -298,10 +298,16 @@ const styles = StyleSheet.create({
     appointmentName: { fontSize: 15, fontWeight: '600', color: C.textPrimary },
     appointmentService: { fontSize: 13, color: C.textMuted, marginTop: 2 },
     appointmentTime: { fontSize: 16, fontWeight: 'bold', color: C.primary },
-    scheduleItem:    { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.bgDivider },
+    scheduleItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 10,
+        borderTopWidth: 1,
+        borderTopColor: C.bgDivider,
+    },
     scheduleTimeCol: { width: 48, alignItems: 'flex-start' },
-    scheduleTime:    { fontSize: 13, fontWeight: '600', color: C.primary },
-    scheduleDate:    { fontSize: 10, color: C.textFaint, marginBottom: 1 },
+    scheduleTime: { fontSize: 13, fontWeight: '600', color: C.primary },
+    scheduleDate: { fontSize: 10, color: C.textFaint, marginBottom: 1 },
     scheduleInfo: { flex: 1, marginLeft: 8 },
     scheduleName: { fontSize: 14, fontWeight: '600', color: C.textPrimary },
     scheduleService: { fontSize: 12, color: C.textMuted, marginTop: 1 },
@@ -312,25 +318,64 @@ const styles = StyleSheet.create({
     badgeGrey: { backgroundColor: C.textFaint },
     badgeText: { color: C.bgSurface, fontSize: 11, fontWeight: '600' },
     footer: { flexDirection: 'row', gap: 12, padding: 16, backgroundColor: C.bgPage },
-    btnPrimary: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: C.primary, borderRadius: 10, paddingVertical: 14, gap: 8 },
+    btnPrimary: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: C.primary,
+        borderRadius: 10,
+        paddingVertical: 14,
+        gap: 8,
+    },
     btnPrimaryText: { color: C.bgSurface, fontWeight: '700', fontSize: 10 },
-    btnSecondary: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: C.bgSurface, borderRadius: 10, paddingVertical: 14, borderWidth: 1, borderColor: C.border, gap: 8 },
+    btnSecondary: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: C.bgSurface,
+        borderRadius: 10,
+        paddingVertical: 14,
+        borderWidth: 1,
+        borderColor: C.border,
+        gap: 8,
+    },
     btnSecondaryText: { color: C.textTertiary, fontWeight: '600', fontSize: 10 },
     emptyText: { color: C.textFaint, textAlign: 'center', paddingVertical: 8 },
     modalOverlay: { flex: 1, backgroundColor: C.overlay, justifyContent: 'flex-end' },
-    modalBox: { backgroundColor: C.bgSurface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 },
+    modalBox: {
+        backgroundColor: C.bgSurface,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 24,
+        paddingBottom: 40,
+    },
     modalTitle: { fontSize: 18, fontWeight: 'bold', color: C.textPrimary, marginBottom: 20 },
     modalLabel: { fontSize: 13, fontWeight: '600', color: C.textLabel, marginBottom: 6 },
     modalInput: { borderWidth: 1, borderColor: C.border, borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 14 },
     modalButtons: { flexDirection: 'row', gap: 12, marginTop: 8 },
-    modalBtnCancel: { flex: 1, padding: 14, borderRadius: 10, borderWidth: 1, borderColor: C.border, alignItems: 'center' },
+    modalBtnCancel: {
+        flex: 1,
+        padding: 14,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: C.border,
+        alignItems: 'center',
+    },
     modalBtnCancelText: { color: C.textSecondary, fontWeight: '600' },
     modalBtnConfirm: { flex: 1, padding: 14, borderRadius: 10, backgroundColor: C.primary, alignItems: 'center' },
     modalBtnConfirmText: { color: C.bgSurface, fontWeight: '700' },
 
-    actionRow:         { flexDirection: 'row', gap: 10, marginTop: 14 },
-    actionBtnConfirm:  { flex: 1, backgroundColor: C.success, borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
+    actionRow: { flexDirection: 'row', gap: 10, marginTop: 14 },
+    actionBtnConfirm: {
+        flex: 1,
+        backgroundColor: C.success,
+        borderRadius: 8,
+        paddingVertical: 10,
+        alignItems: 'center',
+    },
     actionBtnComplete: { flex: 1, backgroundColor: C.info, borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
-    actionBtnCancel:   { flex: 1, backgroundColor: C.danger, borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
-    actionBtnText:     { color: C.bgSurface, fontWeight: '700', fontSize: 14 },
+    actionBtnCancel: { flex: 1, backgroundColor: C.danger, borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
+    actionBtnText: { color: C.bgSurface, fontWeight: '700', fontSize: 14 },
 });
