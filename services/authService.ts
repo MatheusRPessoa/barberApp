@@ -1,9 +1,10 @@
-import { api } from "./api";
+import { api } from './api';
 
 export interface BarberProfile {
     id: string;
     shop_name: string;
     cnpj: string;
+    rating?: number;
     street: string;
     number: string;
     complement: string | null;
@@ -11,6 +12,22 @@ export interface BarberProfile {
     city: string;
     state: string;
     zip_code: string;
+    name?: string;
+    email?: string;
+}
+
+export interface ClientProfile {
+    id: string;
+    cpf: string;
+    street: string;
+    number: string;
+    complement: string | null;
+    neighborhood: string;
+    city: string;
+    state: string;
+    zip_code: string;
+    name?: string;
+    email?: string;
 }
 
 export interface User {
@@ -21,7 +38,6 @@ export interface User {
     status?: string;
     barber?: BarberProfile;
 }
-
 
 export interface AuthResponse {
     accessToken: string;
@@ -36,6 +52,7 @@ export interface RegisterData {
     TYPE: 'CLIENT' | 'BARBER';
     SHOP_NAME?: string;
     CNPJ?: string;
+    CPF?: string;
     STREET?: string;
     NUMBER?: string;
     COMPLEMENT?: string;
@@ -44,7 +61,6 @@ export interface RegisterData {
     STATE?: string;
     ZIP_CODE?: string;
 }
-
 
 interface RawAuthResponse {
     access_token: string;
@@ -72,6 +88,18 @@ export interface UpdateBarberData {
     ZIP_CODE?: string;
 }
 
+export interface UpdateClientData {
+    NAME?: string;
+    CPF?: string;
+    STREET?: string;
+    NUMBER?: string;
+    COMPLEMENT?: string | null;
+    NEIGHBORHOOD?: string;
+    CITY?: string;
+    STATE?: string;
+    ZIP_CODE?: string;
+}
+
 export const authService = {
     login: async (EMAIL: string, PASSWORD: string) => {
         const raw = await api.post<RawAuthResponse>('/auth/login', { EMAIL, PASSWORD }, false);
@@ -84,11 +112,15 @@ export const authService = {
         return normalizeAuthResponse(raw);
     },
 
-    logout: (id: string) =>
-        api.post<void>('/auth/logout', { id }, true),
+    logout: (id: string) => api.post<void>('/auth/logout', { id }, true),
 
     me: () => api.get<User>('/auth/me'),
 
-    updateBarberProfile: (data: UpdateBarberData) =>
-        api.patch<BarberProfile>('/barbers/me', data),
+    getBarberProfile: () => api.get<BarberProfile>('/barbers/me'),
+
+    getClientProfile: () => api.get<ClientProfile>('/clients/me'),
+
+    updateBarberProfile: (data: UpdateBarberData) => api.patch<BarberProfile>('/barbers/me', data),
+
+    updateClientProfile: (data: UpdateClientData) => api.patch<ClientProfile>('/clients/me', data),
 };
