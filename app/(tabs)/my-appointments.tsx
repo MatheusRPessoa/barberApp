@@ -1,11 +1,12 @@
+import ReviewModal from '@/components/ReviewModal';
 import { C } from '@/constants/Colors';
+import { useNotificationsContext } from '@/context/NotificationsContext';
 import { Appointment, appointmentService } from '@/services/appointmentService';
-import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNotificationsContext } from '@/context/NotificationsContext';
 
 type StatusFilter = 'ALL' | 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
 
@@ -60,6 +61,7 @@ export default function MyAppointments() {
     const [changedIds, setChangedIds] = useState<Set<string>>(new Set());
     const prevStatusRef = useRef<Record<string, string>>({});
     const { addNotification } = useNotificationsContext();
+    const [reviewing, setReviewing] = useState<Appointment | null>(null);
 
     const syncAnim = useRef(new Animated.Value(0.3)).current;
     const syncLoop = useRef<Animated.CompositeAnimation | null>(null);
@@ -168,52 +170,55 @@ export default function MyAppointments() {
                                         <Text style={styles.changedText}>Status atualizado!</Text>
                                     </View>
                                 )}
-                                <View style={styles.cardLeft}>
-                                    <View style={styles.dateBox}>
-                                        <Text style={styles.dateDay}>{item.date?.split('-')[2]}</Text>
-                                        <Text style={styles.dateMonth}>
-                                            {
-                                                [
-                                                    'Jan',
-                                                    'Fev',
-                                                    'Mar',
-                                                    'Abr',
-                                                    'Mai',
-                                                    'Jun',
-                                                    'Jul',
-                                                    'Ago',
-                                                    'Set',
-                                                    'Out',
-                                                    'Nov',
-                                                    'Dez',
-                                                ][parseInt(item.date?.split('-')[1]) - 1]
-                                            }
-                                        </Text>
+                                <View style={styles.cardRow}>
+                                    <View style={styles.cardLeft}>
+                                        <View style={styles.dateBox}>
+                                            <Text style={styles.dateDay}>{item.date?.split('-')[2]}</Text>
+                                            <Text style={styles.dateMonth}>
+                                                {
+                                                    ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][
+                                                        parseInt(item.date?.split('-')[1]) - 1
+                                                    ]
+                                                }
+                                            </Text>
+                                        </View>
                                     </View>
-                                </View>
-                                <View style={styles.cardBody}>
-                                    <Text style={styles.shopName}>{item.barber?.shop_name}</Text>
-                                    <Text style={styles.serviceName}>
-                                        {(item.services ?? []).map((s) => s.name).join(' + ')}
-                                    </Text>
-                                    <View style={styles.metaRow}>
-                                        <Ionicons name="time-outline" size={13} color={C.textMuted} />
-                                        <Text style={styles.metaText}>{item.time}</Text>
-                                        <Text style={styles.metaSep}>·</Text>
-                                        <Text style={styles.metaText}>
-                                            R${' '}
-                                            {(item.services ?? [])
-                                                .reduce((s, svc) => s + Number(svc.price ?? 0), 0)
-                                                .toFixed(2)}
+                                    <View style={styles.cardBody}>
+                                        <Text style={styles.shopName}>{item.barber?.shop_name}</Text>
+                                        <Text style={styles.serviceName}>
+                                            {(item.services ?? []).map((s) => s.name).join(' + ')}
                                         </Text>
+                                        <View style={styles.metaRow}>
+                                            <Ionicons name="time-outline" size={13} color={C.textMuted} />
+                                            <Text style={styles.metaText}>{item.time}</Text>
+                                            <Text style={styles.metaSep}>·</Text>
+                                            <Text style={styles.metaText}>
+                                                R${' '}
+                                                {(item.services ?? [])
+                                                    .reduce((s, svc) => s + Number(svc.price ?? 0), 0)
+                                                    .toFixed(2)}
+                                            </Text>
+                                        </View>
                                     </View>
+                                    <PulsingBadge status={item.appointment_status} />
                                 </View>
-                                <PulsingBadge status={item.appointment_status} />
+                                {item.appointment_status === 'COMPLETED' && !item.reviewed && (
+                                    <TouchableOpacity style={styles.reviewBtn} onPress={() => setReviewing(item)}>
+                                        <Ionicons name="star-outline" size={14} color={C.primary} />
+                                        <Text style={styles.reviewBtnText}>Avaliar</Text>
+                                    </TouchableOpacity>
+                                )}
                             </View>
                         );
                     })
                 )}
             </ScrollView>
+            <ReviewModal
+                visible={reviewing !== null}
+                appointmentId={reviewing?.id ?? null}
+                shopName={reviewing?.barber?.shop_name ?? ''}
+                onClose={() => setReviewing(null)}
+            />
         </SafeAreaView>
     );
 }
@@ -256,14 +261,14 @@ const styles = StyleSheet.create({
     emptyText: { color: C.textFaint, fontSize: 14, marginTop: 10 },
 
     card: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: 'column',
         backgroundColor: C.bgSurface,
         borderRadius: 12,
         padding: 14,
         marginBottom: 12,
         gap: 12,
     },
+    cardRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     cardChanged: { borderWidth: 2, borderColor: C.info },
     changedBanner: {
         position: 'absolute',
@@ -307,4 +312,14 @@ const styles = StyleSheet.create({
     },
     badgeDot: { width: 7, height: 7, borderRadius: 4 },
     badgeText: { fontSize: 11, fontWeight: '700' },
+    reviewBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        backgroundColor: C.primaryBg,
+        paddingVertical: 10,
+        borderRadius: 8,
+    },
+    reviewBtnText: { fontSize: 13, color: C.primaryDark, fontWeight: '700' },
 });

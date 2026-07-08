@@ -66,8 +66,10 @@ export default function AppointmentDetails() {
         ]);
     }
 
-    const total = (appointment?.services ?? []).reduce((s, svc) => s + Number(svc.price ?? 0), 0);
-    const status = appointment?.appointment_status;
+    const subtotal = (appointment?.services ?? []).reduce((s, svc) => s + Number(svc.price ?? 0), 0);
+    const originalPrice = appointment?.original_price ?? subtotal;
+    const totalPrice = appointment?.total_price ?? subtotal;
+    const coupon = appointment?.coupon;    const status = appointment?.appointment_status;
     const isActive = status === 'PENDING' || status === 'CONFIRMED';
 
     return (
@@ -138,10 +140,31 @@ export default function AppointmentDetails() {
                                 <Text style={styles.servicePrice}>R$ {Number(svc.price ?? 0).toFixed(2)}</Text>
                             </View>
                         ))}
-                        <View style={styles.totalRow}>
-                            <Text style={styles.totalLabel}>Total</Text>
-                            <Text style={styles.totalValue}>R$ {total.toFixed(2)}</Text>
-                        </View>
+                        {coupon ? (
+                            <>
+                                <View style={styles.totalRow}>
+                                    <Text style={styles.metaText}>Subtotal</Text>
+                                    <Text style={styles.metaText}>R$ {originalPrice.toFixed(2)}</Text>
+                                </View>
+                                <View style={styles.totalRow}>
+                                    <Text style={[styles.metaText, { color: C.success }]}>
+                                        Cupom {coupon.code} (-{coupon.discount_percent}%)
+                                    </Text>
+                                    <Text style={[styles.metaText, { color: C.success }]}>
+                                        - R$ {(originalPrice - totalPrice).toFixed(2)}
+                                    </Text>
+                                </View>
+                                <View style={styles.totalRow}>
+                                    <Text style={styles.totalLabel}>Total</Text>
+                                    <Text style={styles.totalValue}>R$ {totalPrice.toFixed(2)}</Text>
+                                </View>
+                            </>
+                        ) : (
+                            <View style={styles.totalRow}>
+                                <Text style={styles.totalLabel}>Total</Text>
+                                <Text style={styles.totalValue}>R$ {totalPrice.toFixed(2)}</Text>
+                            </View>
+                        )}
                     </View>
 
                     {feedbackMsg !== '' && (
