@@ -38,6 +38,11 @@ export const barberService = {
         return api.get<BarberShop[]>(`/barbers${qs}`);
     },
 
+    trending: (coords?: { lat: number; lng: number }) => {
+        const qs = coords ? `?lat=${coords.lat}&lng=${coords.lng}` : '';
+        return api.get<(BarberShop & { recent_appointments: number })[]>(`/barbers/trending${qs}`);
+    },
+
     listBarberServices: (barberId: string) => api.get<Service[]>(`/barbers/${barberId}/services`, false),
 
     getAvailableSlots: (barberId: string, date: string) =>

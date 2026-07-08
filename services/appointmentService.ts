@@ -21,6 +21,10 @@ export interface Appointment {
     time: string;
     appointment_status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
     status: string;
+    reviewed?: boolean,
+    coupon?: { code: string, discount_percent: number } | null;
+    original_price?: number;
+    total_price?: number;
 }
 
 interface ListParams {
@@ -49,8 +53,14 @@ export const appointmentService = {
     updateStatus: (id: string, STATUS: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED') =>
         api.patch<void>(`/appointments/${id}/status`, { STATUS }),
 
-    create: (data: { BARBER_ID: string; SERVICE_IDS: string[]; DATE: string; TIME: string }) =>
+    create: (data: { BARBER_ID: string; SERVICE_IDS: string[]; DATE: string; TIME: string; COUPON_CODE?: string }) =>
         api.post<Appointment>('/appointments', data),
 
     listMine: () => api.get<Appointment[]>('/appointments/mine'),
+
+    review: (id: string, data: { RATING: number; COMMENT?: string }) =>
+    api.post<{ id: string; rating: number; comment: string | null; created_at: string }>(
+        `/appointments/${id}/review`,
+        data
+    ),
 };
