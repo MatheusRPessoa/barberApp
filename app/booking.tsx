@@ -1,11 +1,12 @@
 import { C } from '@/constants/Colors';
+import { couponService } from '@/services/couponService';
 import { appointmentService } from '@/services/appointmentService';
 import { barberService, Service } from '@/services/barberService';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 function toLocalDate(date: Date) {
@@ -49,6 +50,9 @@ export default function Booking() {
     const [selectedTime, setSelectedTime] = useState('');
     const [feedback, setFeedback] = useState('');
     const [feedbackIsError, setFeedbackIsError] = useState(false);
+    const [couponCode, setCouponCode] = useState('');
+    const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount_percent: number } | null>(null);
+    const [couponError, setCouponError] = useState('');
 
     const { data: services = [], isLoading: loadingServices } = useQuery({
         queryKey: ['barber-services', barberId],
@@ -86,6 +90,7 @@ export default function Booking() {
                 SERVICE_IDS: selectedServices.map((s) => s.id),
                 DATE: selectedDate,
                 TIME: selectedTime,
+                ...(appliedCoupon && { COUPON_CODE: appliedCoupon.code }),
             }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['appointments-mine'] });
@@ -101,6 +106,22 @@ export default function Booking() {
         },
     });
 
+    const subtotal = selectedServices.reduce((sum, s) => sum + Number(s.price ?? 0), 0);
+    const discount = appliedCoupon ? (subtotal * appliedCoupon.discount_percent) / 100 : 0;
+    const total = subtotal - discount;
+
+    const couponMutation = useMutation({
+        mutationFn: () => couponService.validate(couponCode, barberId),
+        onSuccess: (data) => {
+            setAppliedCoupon({ code: data.code, discount_percent: data.discount_percent });
+            setCouponError('');
+        },
+        onError: (err: unknown) => {
+            setAppliedCoupon(null);
+            setCouponError(err instanceof Error ? err.message: 'Cupom inválido.');
+        },
+    });
+
     return (
         <SafeAreaView style={styles.safe}>
             <View style={styles.header}>
@@ -113,7 +134,6 @@ export default function Booking() {
                 </View>
             </View>
 
-            {/* Steps */}
             <View style={styles.stepsRow}>
                 {['Serviço', 'Data', 'Confirmar'].map((label, i) => (
                     <View key={label} style={styles.stepItem}>
@@ -300,12 +320,63 @@ export default function Booking() {
                                     <Text style={styles.summaryValue}>{row.value}</Text>
                                 </View>
                             ))}
-                            <View style={[styles.summaryRow, { borderBottomWidth: 0 }]}>
-                                <Ionicons name="cash-outline" size={18} color={C.primary} />
-                                <Text style={styles.summaryLabel}>Valor</Text>
-                                <Text style={[styles.summaryValue, { color: C.success, fontWeight: '700' }]}>
-                                    R$ {selectedServices.reduce((sum, s) => sum + Number(s.price ?? 0), 0).toFixed(2)}
-                                </Text>
+                            <View style={styles.couponBox}>
+                                <View style={styles.couponInputRow}>
+                                    <TextInput
+                                        style={styles.couponInput}
+                                        placeholder='Código do cupom'
+                                        placeholderTextColor={C.textFaint}
+                                        value={couponCode}
+                                        onChangeText={(t) => setCouponCode(t.toUpperCase())}
+                                        autoCapitalize='characters'
+                                        editable={!appliedCoupon}
+                                    />
+                                    {appliedCoupon ? (
+                                        <TouchableOpacity
+                                            style={styles.couponBtn}
+                                            onPress={() => {
+                                                setAppliedCoupon(null);
+                                                setCouponCode('');
+                                                setCouponError('');
+                                            }}
+                                        >
+                                            <Text style={styles.couponBtnText}>Remover</Text>
+                                        </TouchableOpacity>
+                                    ): (
+                                        <TouchableOpacity 
+                                            style={[styles.couponBtn, (!couponCode || couponMutation.isPending) && styles.nextBtnDisabled]}
+                                            disabled={!couponCode || couponMutation.isPending}
+                                            onPress={() => couponMutation.mutate()}
+                                        >
+                                            <Text style={styles.couponBtnText}>{couponMutation.isPending ? '...' : 'Aplicar'}</Text>
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+                                {couponError !== '' && <Text style={styles.couponError}>{couponError}</Text>}
+                                {appliedCoupon && (
+                                    <Text style={styles.couponOk}>
+                                        Cupom {appliedCoupon.code} aplicado - {appliedCoupon.discount_percent}% de desconto
+                                    </Text>
+                                )}
+                            </View>
+
+                            <View style={styles.summaryCard}>
+                                <View style={styles.summaryRow}>
+                                    <Text style={styles.summaryLabel}>Subtotal</Text>
+                                    <Text style={styles.summaryValue}>R$ {subtotal.toFixed(2)}</Text>
+                                </View>
+                                {discount > 0 && (
+                                    <View style={styles.summaryRow}>
+                                        <Text style={styles.summaryLabel}>Desconto</Text>
+                                        <Text style={[styles.summaryValue, { color: C.success }]}>- R$ {discount.toFixed(2)}</Text>
+                                    </View>
+                                )}
+                                <View style={[styles.summaryRow, { borderBottomWidth: 0 }]}>
+                                    <Text style={[styles.summaryLabel, { fontWeight: '700', color: C.textPrimary }]}>Total</Text>
+                                    <Text style={[styles.summaryValue, { color: C.success, fontWeight: '700', fontSize: 16 }]}>
+                                        R$ {total.toFixed(2)}
+                                    </Text>
+                                </View>
                             </View>
                         </View>
                         {feedback !== '' && (
@@ -455,4 +526,12 @@ const styles = StyleSheet.create({
     feedbackMsg: { textAlign: 'center', fontSize: 13, borderRadius: 8, padding: 12, marginBottom: 8 },
     feedbackSuccess: { backgroundColor: C.successBg, color: C.successText },
     feedbackError: { backgroundColor: C.errorBg, color: C.errorText },
+
+    couponBox: { marginBottom: 16 },
+    couponInputRow: { flexDirection: 'row', gap: 8 },
+    couponInput: { flex: 1, borderWidth: 1, borderColor: C.border, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: C.textPrimary },
+    couponBtn: { backgroundColor: C.textPrimary, borderRadius: 8, paddingHorizontal: 16, justifyContent: 'center', alignItems: 'center' },
+    couponBtnText: { color: C.bgSurface, fontWeight: '700', fontSize: 13 },
+    couponError: { color: C.danger, fontSize: 12, marginTop: 6 },
+    couponOk: { color: C.success, fontSize: 12, marginTop: 6 },
 });
