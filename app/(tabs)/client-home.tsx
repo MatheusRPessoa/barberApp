@@ -1,17 +1,18 @@
 import { C } from '@/constants/Colors';
 import { useAuth } from '@/context/AuthContext';
-import { barberService, BarberShop } from '@/services/barberService';
-import { couponService } from '@/services/couponService';
-import { useQuery } from '@tanstack/react-query';
-import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
 import { useNotificationsContext } from '@/context/NotificationsContext';
+import { barberService, BarberShop } from '@/services/barberService';
+import { favoriteService } from '@/services/favoriteService';
+import { couponService } from '@/services/couponService';
+import { Ionicons } from '@expo/vector-icons';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
 
+import PlaceHolderImage from '@/components/PlaceholderImage';
+import { useLocation } from '@/hooks/useLocation';
+import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import PlaceHolderImage from '@/components/PlaceholderImage';
-import { useRouter } from 'expo-router';
-import { useLocation } from '@/hooks/useLocation';
 
 function formatAddress(shop: BarberShop) {
     return `${shop.street}, ${shop.number} - ${shop.city}/${shop.state}`;
@@ -19,105 +20,6 @@ function formatAddress(shop: BarberShop) {
 
 // ── Abas com dados mockados (aguardando backend de geolocalização, favoritos e trending) ──
 const TABS = ['Próximos', 'Em Alta', 'Favoritos'];
-
-const NEARBY = [
-    {
-        id: '0',
-        name: 'Teste Barb',
-        rating: 5.0,
-        distance: '0.2km',
-        time: '3min',
-        discount: '30% OFF',
-        services: ['Corte', 'Barba', 'Penteado'],
-    },
-    {
-        id: '1',
-        name: 'Classic Cuts',
-        rating: 4.8,
-        distance: '0.8km',
-        time: '10min',
-        discount: '20% OFF',
-        services: ['Barba'],
-    },
-    {
-        id: '2',
-        name: 'Modern Barber',
-        rating: 4.6,
-        distance: '1.2km',
-        time: '15min',
-        discount: '15% OFF',
-        services: ['Coloração'],
-    },
-    {
-        id: '3',
-        name: "Gentleman's Corner",
-        rating: 4.9,
-        distance: '1.5km',
-        time: '15min',
-        discount: null,
-        services: ['Corte', 'Penteado'],
-    },
-    {
-        id: '4',
-        name: 'Sharp & Clean',
-        rating: 4.7,
-        distance: '2.0km',
-        time: '20min',
-        discount: null,
-        services: ['Corte'],
-    },
-];
-
-const TRENDING = [
-    {
-        id: '0',
-        name: 'Teste Barb',
-        rating: 5.0,
-        distance: '0.2km',
-        time: '3min',
-        discount: '30% OFF',
-        services: ['Corte', 'Barba', 'Penteado'],
-    },
-    {
-        id: '5',
-        name: 'The Barber Lab',
-        rating: 4.9,
-        distance: '0.5km',
-        time: '8min',
-        discount: '10% OFF',
-        services: ['Corte', 'Barba'],
-    },
-    {
-        id: '6',
-        name: 'Studio 54 Barber',
-        rating: 4.8,
-        distance: '1.8km',
-        time: '18min',
-        discount: null,
-        services: ['Penteado', 'Coloração'],
-    },
-];
-
-const FAVORITES = [
-    {
-        id: '0',
-        name: 'Teste Barb',
-        rating: 5.0,
-        distance: '0.2km',
-        time: '3min',
-        discount: '30% OFF',
-        services: ['Corte', 'Barba', 'Penteado'],
-    },
-    {
-        id: '1',
-        name: 'Classic Cuts',
-        rating: 4.8,
-        distance: '0.8km',
-        time: '10min',
-        discount: '20% OFF',
-        services: ['Corte', 'Barba'],
-    },
-];
 
 function Rating({ rating }: { rating: number | null }) {
     if (rating === null) {
@@ -135,7 +37,17 @@ function Rating({ rating }: { rating: number | null }) {
     );
 }
 
-function RealShopCard({ shop, featured, onAgendar }: { shop: BarberShop; featured: boolean; onAgendar: () => void }) {
+function RealShopCard({ 
+    shop, 
+    featured, 
+    onAgendar,
+    onToggleFavorite,
+}: { 
+    shop: BarberShop; 
+    featured: boolean; 
+    onAgendar: () => void;
+    onToggleFavorite?: () => void; 
+}) {
     return (
         <View style={[styles.listCard, featured && styles.listCardFeatured]}>
             <PlaceHolderImage style={[styles.listImage, featured && styles.listImageFeatured]} logoSize={28} />
@@ -148,8 +60,7 @@ function RealShopCard({ shop, featured, onAgendar }: { shop: BarberShop; feature
                         </View>
                     )}
                     {shop.is_favorite !== undefined && (
-                        // Ação de favoritar aguarda backend — por ora só exibe o estado
-                        <TouchableOpacity disabled style={{ marginLeft: 'auto' }}>
+                        <TouchableOpacity onPress={onToggleFavorite} style={{ marginLeft: 'auto' }} hitSlop={8}>
                             <Ionicons
                                 name={shop.is_favorite ? 'heart' : 'heart-outline'}
                                 size={18}
@@ -202,33 +113,53 @@ export default function ClientHome() {
         staleTime: 5 * 60_000,
     });
 
+    const { data: trendingShops = [] } = useQuery({
+        queryKey: ['barbers-trending', coords],
+        queryFn: () => barberService.trending(coords ?? undefined),
+        enabled: activeTab === 1,
+        staleTime: 5 * 60_000,
+    });
+
+    const { data: favoriteShops = [] } = useQuery({
+        queryKey: ['favorites', coords],
+        queryFn: () => favoriteService.list(coords ?? undefined),
+        enabled: activeTab === 2,
+        staleTime: 60_000,
+    })
+
+    const queryClient = useQueryClient();
+    const favoriteMutation = useMutation({
+        mutationFn: (shop: BarberShop) =>
+            shop.is_favorite ? favoriteService.remove(shop.id) : favoriteService.add(shop.id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['barbers'] });
+            queryClient.invalidateQueries({ queryKey: ['barbers-trending'] });
+            queryClient.invalidateQueries({ queryKey: ['favorites'] });
+        },
+    });
+
     const serviceFilters = [...new Set(barbers.flatMap((b) => (b.services ?? []).map((s) => s.name)))];
 
-    const filtered = barbers
-        .filter((b) => !activeFilter || (b.services ?? []).some((s) => s.name === activeFilter))
-        .filter((b) => search.trim() === '' || b.shop_name.toLowerCase().includes(search.trim().toLowerCase()));
+       function applyFilters(list: BarberShop[]) {
+        return list
+            .filter((b) => !activeFilter || (b.services ?? []).some((s) => s.name === activeFilter))
+            .filter((b) => search.trim() === '' || b.shop_name.toLowerCase().includes(search.trim().toLowerCase()));
+    }
 
+    const filtered = applyFilters(barbers);
     const topShops = filtered.slice(0, 4);
 
-    // "Próximos" usa distância real quando há localização; Em Alta/Favoritos seguem mockados
-    const nearbyReal = coords
-        ? [...filtered].sort((a, b) => (a.distance_km ?? Number.MAX_VALUE) - (b.distance_km ?? Number.MAX_VALUE))
-        : null;
+    const nearbyList = coords
+        ? [...barbers].sort((a, b) => (a.distance_km ?? Number.MAX_VALUE) - (b.distance_km ?? Number.MAX_VALUE))
+        : barbers;
 
-    const mockList = [NEARBY, TRENDING, FAVORITES][activeTab].filter(
-        (item) => !activeFilter || item.services.includes(activeFilter)
-    );
+    const tabData = applyFilters([nearbyList, trendingShops, favoriteShops][activeTab]);
 
     function handleAgendar(shop: BarberShop) {
         router.push({
             pathname: '/booking',
             params: { barberId: shop.id, barberName: shop.shop_name },
         });
-    }
-
-    // Placeholder: cards mockados agendam na primeira barbearia real até a integração
-    function handleAgendarMock() {
-        if (barbers[0]) handleAgendar(barbers[0]);
     }
 
     return (
@@ -363,69 +294,25 @@ export default function ClientHome() {
                         </View>
 
                         <View style={styles.listContainer}>
-                            {activeTab === 0 && nearbyReal
-                                ? nearbyReal.map((shop, index) => (
-                                      <RealShopCard
-                                          key={shop.id}
-                                          shop={shop}
-                                          featured={index === 0}
-                                          onAgendar={() => handleAgendar(shop)}
-                                      />
-                                  ))
-                                : mockList.map((item) => (
-                                      <View
-                                          key={item.id}
-                                          style={[styles.listCard, item.id === '0' && styles.listCardFeatured]}
-                                      >
-                                          <PlaceHolderImage
-                                              style={[styles.listImage, item.id === '0' && styles.listImageFeatured]}
-                                              logoSize={28}
-                                          />
-                                          <View style={styles.listInfo}>
-                                              <View style={styles.listNameRow}>
-                                                  <Text style={styles.listName}>{item.name}</Text>
-                                                  {item.id === '0' && (
-                                                      <View style={styles.topBadge}>
-                                                          <Text style={styles.topBadgeText}>#1</Text>
-                                                      </View>
-                                                  )}
-                                              </View>
-                                              <View style={styles.ratingRow}>
-                                                  <Ionicons name="star" size={12} color={C.primary} />
-                                                  <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
-                                              </View>
-                                              <View style={styles.listMeta}>
-                                                  <Ionicons name="location-outline" size={12} color={C.textMuted} />
-                                                  <Text style={styles.listMetaText}>{item.distance}</Text>
-                                                  <Ionicons
-                                                      name="time-outline"
-                                                      size={12}
-                                                      color={C.textMuted}
-                                                      style={{ marginLeft: 8 }}
-                                                  />
-                                                  <Text style={styles.listMetaText}>{item.time}</Text>
-                                              </View>
-                                              <View style={styles.serviceTagsRow}>
-                                                  {item.services.map((s) => (
-                                                      <View key={s} style={styles.serviceTag}>
-                                                          <Text style={styles.serviceTagText}>{s}</Text>
-                                                      </View>
-                                                  ))}
-                                              </View>
-                                              {item.discount && (
-                                                  <View style={styles.discountBadge}>
-                                                      <Text style={styles.discountText}>{item.discount}</Text>
-                                                  </View>
-                                              )}
-                                              <TouchableOpacity
-                                                  style={[styles.bookBtn, item.id === '0' && styles.bookBtnFeatured]}
-                                                  onPress={handleAgendarMock}
-                                              >
-                                                  <Text style={styles.bookBtnText}>Agendar</Text>
-                                              </TouchableOpacity>
-                                          </View>
-                                      </View>
-                                  ))}
+                            {tabData.length === 0 ? (
+                                <Text style={styles.emptyText}>
+                                    {activeTab === 2
+                                        ? 'Você ainda não favoritou nenhuma barbearia.'
+                                        : activeTab === 1
+                                        ? 'Nenhuma barbearia em alta nos últimos 30 dias.'
+                                        : 'Nenhuma barbearia encontrada.'}
+                                </Text>
+                            ) : (
+                                tabData.map((shop, index) => (
+                                    <RealShopCard
+                                        key={shop.id}
+                                        shop={shop}
+                                        featured={index === 0}
+                                        onAgendar={() => handleAgendar(shop)}
+                                        onToggleFavorite={() => favoriteMutation.mutate(shop)}
+                                    />
+                                ))
+                            )}
                         </View>
 
                         <View style={styles.sectionHeader}>
@@ -493,7 +380,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 16,
         borderRadius: 12,
         paddingHorizontal: 14,
-        paddingVertical: 10,
+        paddingVertical: 3,
         gap: 8,
         marginBottom: 14,
     },
