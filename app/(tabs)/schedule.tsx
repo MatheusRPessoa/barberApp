@@ -94,7 +94,13 @@ export default function Schedule() {
     function AppointmentCard({ item }: { item: Appointment }) {
         return (
             <View style={styles.card}>
-                <View style={styles.cardTop}>
+                <TouchableOpacity 
+                    style={styles.cardTop}
+                    activeOpacity={0.7}
+                    onPress={() => 
+                        router.push({ pathname: '/appointment-details', params: { appointmentId:  item.id} })
+                    }
+                >
                     <Text style={styles.time}>{item.time}</Text>
                     <View style={styles.cardInfo}>
                         <Text style={styles.clientName}>{item.client?.user?.name}</Text>
@@ -106,7 +112,7 @@ export default function Schedule() {
                     <Text style={styles.price}>
                         R$ {(item.services ?? []).reduce((s, svc) => s + Number(svc.price ?? 0), 0).toFixed(2)}
                     </Text>
-                </View>
+                </TouchableOpacity>
                 <View style={styles.cardActions}>
                     {item.appointment_status === 'PENDING' && (
                         <TouchableOpacity

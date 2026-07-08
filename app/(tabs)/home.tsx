@@ -125,7 +125,13 @@ export default function Home() {
                 </View>
 
                 {nextAppointment ? (
-                    <View style={styles.card}>
+                    <TouchableOpacity
+                        style={styles.card}
+                        activeOpacity={0.7}
+                        onPress={() => 
+                            router.push({ pathname: '/appointment-details', params: { appointmentId: nextAppointment.id } })
+                        }
+                    >
                         <View style={styles.sectionHeader}>
                             <Text style={styles.sectionTitle}>Próximo Agendamento</Text>
                             <Text style={styles.infoOrange}>{nextAppointment.time}</Text>
@@ -164,11 +170,11 @@ export default function Home() {
                                 <Text style={styles.actionBtnText}>Cancelar</Text>
                             </TouchableOpacity>
                         </View>
-                    </View>
+                    </TouchableOpacity>
                 ) : (
-                    <View style={styles.card}>
+                    <TouchableOpacity style={styles.card}>
                         <Text style={styles.emptyText}>Nenhum agendamento próximo</Text>
-                    </View>
+                    </TouchableOpacity>
                 )}
 
                 <View style={styles.card}>
@@ -183,7 +189,17 @@ export default function Home() {
                         <Text style={styles.emptyText}>Nenhum agendamento próximo</Text>
                     ) : (
                         upcoming.slice(0, 4).map((item) => (
-                            <View key={item.id} style={styles.scheduleItem}>
+                            <TouchableOpacity 
+                                key={item.id} 
+                                style={styles.scheduleItem}
+                                activeOpacity={0.7}
+                                onPress={() => 
+                                    router.push({
+                                        pathname: '/appointment-details',
+                                        params: { appointmentId: item.id },
+                                    })
+                                }
+                            >
                                 <View style={styles.scheduleTimeCol}>
                                     {item.date !== today && (
                                         <Text style={styles.scheduleDate}>
@@ -201,7 +217,7 @@ export default function Home() {
                                 <View style={[styles.badge, badgeStyle(item.appointment_status)]}>
                                     <Text style={styles.badgeText}>{statusLabel(item.appointment_status)}</Text>
                                 </View>
-                            </View>
+                            </TouchableOpacity>
                         ))
                     )}
                 </View>
