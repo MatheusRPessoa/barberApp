@@ -1,6 +1,7 @@
 import ReviewModal from '@/components/ReviewModal';
 import { C } from '@/constants/Colors';
 import { useNotificationsContext } from '@/context/NotificationsContext';
+import { router, useRouter } from 'expo-router';
 import { Appointment, appointmentService } from '@/services/appointmentService';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
@@ -99,11 +100,6 @@ export default function MyAppointments() {
         appointments.forEach((a: Appointment) => {
             if (prev[a.id] && prev[a.id] !== a.appointment_status) {
                 changed.add(a.id);
-                addNotification({
-                    title: 'Agendamento atualizado',
-                    body: `${a.barber?.shop_name ?? 'Barbearia'} — status: ${STATUS_LABEL[a.appointment_status]}`,
-                    data: { appointmentId: a.id },
-                });
             }
             prev[a.id] = a.appointment_status;
         });
@@ -111,7 +107,7 @@ export default function MyAppointments() {
             setChangedIds(changed);
             setTimeout(() => setChangedIds(new Set()), 3000);
         }
-    }, [appointments, addNotification]);
+    }, [appointments]);
 
     const filtered =
         activeFilter === 'ALL'
@@ -170,7 +166,16 @@ export default function MyAppointments() {
                                         <Text style={styles.changedText}>Status atualizado!</Text>
                                     </View>
                                 )}
-                                <View style={styles.cardRow}>
+                                <TouchableOpacity 
+                                    style={styles.cardRow}
+                                    activeOpacity={0.7}
+                                    onPress={() => 
+                                        router.push({
+                                            pathname: '/appointment-details',
+                                            params: { appointmentId: item.id },
+                                        })
+                                    }
+                                >
                                     <View style={styles.cardLeft}>
                                         <View style={styles.dateBox}>
                                             <Text style={styles.dateDay}>{item.date?.split('-')[2]}</Text>
@@ -201,7 +206,7 @@ export default function MyAppointments() {
                                         </View>
                                     </View>
                                     <PulsingBadge status={item.appointment_status} />
-                                </View>
+                                </TouchableOpacity>
                                 {item.appointment_status === 'COMPLETED' && !item.reviewed && (
                                     <TouchableOpacity style={styles.reviewBtn} onPress={() => setReviewing(item)}>
                                         <Ionicons name="star-outline" size={14} color={C.primary} />
