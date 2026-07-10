@@ -5,6 +5,8 @@ import { Appointment, appointmentService } from '@/services/appointmentService';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
+import { useAppointmentAlerts } from '@/hooks/useAppointmentAlerts';
+
 import React from 'react';
 
 export default function TabsLayout() {
@@ -12,7 +14,7 @@ export default function TabsLayout() {
     const isBarber = user?.type === 'BARBER';
     const insets = useSafeAreaInsets();
 
-    const { data: allAppointments = [] } = useQuery({
+    const { data: allAppointments = [], isSuccess: allSuccess } = useQuery({
         queryKey: ['appointments-all'],
         queryFn: () => appointmentService.list(),
         enabled: !!user && isBarber,
@@ -20,13 +22,16 @@ export default function TabsLayout() {
         refetchOnWindowFocus: true,
     });
 
-    const { data: myAppointments = [] } = useQuery({
+    const { data: myAppointments = [], isSuccess: mineSuccess } = useQuery({
         queryKey: ['appointments-mine'],
         queryFn: () => appointmentService.listMine(),
         enabled: !!user && !isBarber,
         refetchInterval: 15_000,
         refetchOnWindowFocus: true,
     });
+
+    useAppointmentAlerts(allAppointments, allSuccess, true);
+    useAppointmentAlerts(myAppointments, mineSuccess, false);
 
     const pendingCount = allAppointments.filter((a: Appointment) => a.appointment_status === 'PENDING').length;
 

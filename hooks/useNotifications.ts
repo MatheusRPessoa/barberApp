@@ -1,8 +1,9 @@
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import { api } from '@/services/api';
+import { router, useRouter } from 'expo-router';
 import { useNotificationsContext } from '@/context/NotificationsContext';
 
 Notifications.setNotificationHandler({
@@ -42,8 +43,18 @@ async function registerPushToken() {
 
 export function useNotifications(enabled: boolean) {
     const { addNotification } = useNotificationsContext();
+    const router = useRouter();
+    const lastResponse = Notifications.useLastNotificationResponse();
     const notifListener = useRef<Notifications.EventSubscription | undefined>(undefined);
     const responseListener = useRef<Notifications.EventSubscription | undefined>(undefined);
+
+    const openFromData = useCallback(
+        (data: Record<string, unknown> | undefined) => {
+            const id = data?.appointmentId;
+            if (id) router.push({ pathname: '/appointment-details', params: { appointmentId: String(id) } });
+        },
+        [router]
+    );
 
     useEffect(() => {
         if (!enabled) return;
@@ -59,7 +70,7 @@ export function useNotifications(enabled: boolean) {
         });
 
         responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
-            console.log('Usuário tocou na notificação:', response);
+            openFromData(response.notification.request.content.data as Record<string, unknown>);
         });
 
         return () => {
@@ -67,4 +78,9 @@ export function useNotifications(enabled: boolean) {
             responseListener.current?.remove();
         };
     }, [enabled, addNotification]);
+
+    useEffect(() => {
+        if (!enabled || !lastResponse) return;
+        openFromData(lastResponse.notification.request.content.data as Record<string, unknown>);
+    }, [enabled, lastResponse]);
 }

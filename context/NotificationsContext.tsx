@@ -1,4 +1,5 @@
-import React, { createContext, useCallback, useContext, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 export interface AppNotification {
     id: string;
@@ -20,12 +21,17 @@ const NotificationsContext = createContext({} as NotificationsContextData);
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
+    const { user } = useAuth();
+
+    useEffect(() => {
+        setNotifications([])
+    }, [user?.id]);
 
     const addNotification = useCallback((n: Omit<AppNotification, 'id' | 'read' | 'receivedAt'>) => {
         setNotifications((prev) => [
             {
                 ...n,
-                id: Date.now().toString(),
+                id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
                 read: false,
                 receivedAt: new Date().toISOString(),
             },
