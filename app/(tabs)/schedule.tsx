@@ -1,9 +1,10 @@
 import { C } from '@/constants/Colors';
+import CancelModal from '@/components/CancelModal';
 import { Appointment, appointmentService } from '@/services/appointmentService';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -35,6 +36,7 @@ export default function Schedule() {
     const router = useRouter();
     const queryClient = useQueryClient();
     const today = toDateString(new Date());
+    const [cancelId, setCancelId] = useState<string | null>(null);
 
     const {
         data: appointments = [],
@@ -59,7 +61,12 @@ export default function Schedule() {
 
     const todayList = appointments
         .filter((a: Appointment) => a.date === today)
-        .sort((a: Appointment, b: Appointment) => a.time.localeCompare(b.time));
+        .sort((a: Appointment, b: Appointment) => {
+            const aPending = a.appointment_status === 'PENDING' ? 0 : 1;
+            const bPending = b.appointment_status === 'PENDING' ? 0 : 1;
+            if (aPending !== bPending) return aPending - bPending;
+            return a.time.localeCompare(b.time);
+    });
 
     const upcoming = appointments
         .filter((a: Appointment) => a.date > today)
@@ -142,7 +149,7 @@ export default function Schedule() {
                                 styles.btnDisabled,
                         ]}
                         disabled={item.appointment_status === 'COMPLETED' || item.appointment_status === 'CANCELLED'}
-                        onPress={() => handleUpdateStatus(item.id, 'CANCELLED')}
+                        onPress={() => setCancelId(item.id)}
                     >
                         <Text style={styles.btnCancelText}>Cancelar</Text>
                     </TouchableOpacity>
@@ -232,6 +239,11 @@ export default function Schedule() {
                     ))
                 )}
             </ScrollView>
+            <CancelModal
+                visible={cancelId !== null}
+                appointmentId={cancelId}
+                onClose={() => setCancelId(null)}
+            />
         </SafeAreaView>
     );
 }

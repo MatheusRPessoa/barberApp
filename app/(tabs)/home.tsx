@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNotificationsContext } from '@/context/NotificationsContext';
 import React, { useState } from 'react';
 import {
     ActivityIndicator,
@@ -19,6 +20,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PlaceHolderImage from '@/components/PlaceholderImage';
+import CancelModal from '@/components/CancelModal';
 
 function toDateString(date: Date) {
     const y = date.getFullYear();
@@ -31,10 +33,12 @@ export default function Home() {
     const router = useRouter();
     const { user, logout } = useAuth();
     const queryClient = useQueryClient();
+    const [cancelId, setCancelId] = useState<string | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [clientName, setClientName] = useState('');
     const [service, setService] = useState('');
     const [time, setTime] = useState('');
+    const { unreadCount } = useNotificationsContext();
 
     const today = toDateString(new Date());
 
@@ -108,7 +112,15 @@ export default function Home() {
                         <Text style={styles.shopName}>{user?.name}</Text>
                         <Text style={styles.subtitle}>Barbeiro</Text>
                     </View>
-                    <TouchableOpacity onPress={logout}>
+                    <TouchableOpacity style={styles.bellBtn} onPress={() => router.push('/notifications')}>
+                        <Ionicons name="notifications-outline" size={22} color={C.textPrimary} />
+                        {unreadCount > 0 && (
+                            <View style={styles.bellBadge}>
+                                <Text style={styles.bellBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                            </View>
+                        )}
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={logout} style={{ marginLeft: 8 }}>
                         <Ionicons name="log-out-outline" size={24} color={C.textSecondary} />
                     </TouchableOpacity>
                 </View>
@@ -165,7 +177,7 @@ export default function Home() {
                             )}
                             <TouchableOpacity
                                 style={styles.actionBtnCancel}
-                                onPress={() => handleUpdateStatus(nextAppointment.id, 'CANCELLED')}
+                                onPress={() => setCancelId(nextAppointment.id)}
                             >
                                 <Text style={styles.actionBtnText}>Cancelar</Text>
                             </TouchableOpacity>
@@ -288,6 +300,11 @@ export default function Home() {
                     </View>
                 </View>
             </Modal>
+            <CancelModal
+                visible={cancelId !== null}
+                appointmentId={cancelId}
+                onClose={() => setCancelId(null)}
+            />
         </SafeAreaView>
     );
 }
@@ -394,4 +411,7 @@ const styles = StyleSheet.create({
     actionBtnComplete: { flex: 1, backgroundColor: C.info, borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
     actionBtnCancel: { flex: 1, backgroundColor: C.danger, borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
     actionBtnText: { color: C.bgSurface, fontWeight: '700', fontSize: 14 },
+    bellBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.bgSurface, alignItems: 'center', justifyContent: 'center' },
+    bellBadge: { position: 'absolute', top: -2, right: -2, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: C.danger, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 },
+    bellBadgeText: { fontSize: 9, fontWeight: '800', color: C.bgSurface },
 });
