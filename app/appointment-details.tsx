@@ -7,6 +7,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import CancelModal from '@/components/CancelModal';
+import { CANCEL_REASON_LABELS } from '@/constants/cancelReasons';
 
 const STATUS_LABEL: Record<Appointment['appointment_status'], string> = {
     PENDING: 'Pendente',
@@ -32,6 +34,7 @@ export default function AppointmentDetails() {
     const queryClient = useQueryClient();
     const { user } = useAuth();
     const isBarber = user?.type === 'BARBER';
+    const [showCancel, setShowCancel] = useState(false);
 
     const [feedbackMsg, setFeedbackMsg] = useState('');
 
@@ -60,10 +63,7 @@ export default function AppointmentDetails() {
     });
 
     function confirmCancel() {
-        Alert.alert('Cancelar agendamento', 'Tem certeza que deseja cancelar este agendamento?', [
-            { text: 'Voltar', style: 'cancel' },
-            { text: 'Cancelar agendamento', style: 'destructive', onPress: () => updateStatus('CANCELLED') },
-        ]);
+        setShowCancel(true);
     }
 
     const subtotal = (appointment?.services ?? []).reduce((s, svc) => s + Number(svc.price ?? 0), 0);
@@ -167,6 +167,25 @@ export default function AppointmentDetails() {
                         )}
                     </View>
 
+                    {appointment.appointment_status === 'CANCELLED' && appointment.cancel_reason && (
+                        <View style={styles.card}>
+                            <Text style={styles.sectionTitle}>Cancelamento</Text>
+                            <View style={styles.metaRow}>
+                                <Text style={styles.metaText}>Motivo</Text>
+                                <Text style={[styles.metaText, { color: C.textPrimary }]}>
+                                    {CANCEL_REASON_LABELS[appointment.cancel_reason] ?? appointment.cancel_reason}
+                                </Text>
+                            </View>
+                            {appointment.cancel_note ? (
+                                <Text style={[styles.metaText, { marginTop: 6 }]}>“{appointment.cancel_note}”</Text>
+                            ): null}
+                            <Text style={[styles.serviceDuration, { marginTop: 6 }]}>
+                                Cancelado por { appointment.cancelled_by === 'BARBER' ? 'barbearia' : 'cliente' }
+                                {appointment.cancelled_at ? ` em ${formatDate(appointment.cancelled_at.split('T')[0])}`: ''}
+                            </Text>
+                        </View>
+                    )}
+
                     {feedbackMsg !== '' && (
                         <View style={styles.feedbackBox}>
                             <Ionicons name="alert-circle-outline" size={16} color={C.danger} />
@@ -203,6 +222,12 @@ export default function AppointmentDetails() {
                             </TouchableOpacity>
                         </View>
                     )}
+                    <CancelModal
+                        visible={showCancel}
+                        appointmentId={appointment.id}
+                        onClose={() => setShowCancel(false)}
+                        onCancelled={() => router.back()}
+                    />
                 </ScrollView>
             )}
         </SafeAreaView>
