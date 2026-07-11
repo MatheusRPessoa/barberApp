@@ -166,10 +166,10 @@ export default function MyAppointments() {
                                         <Text style={styles.changedText}>Status atualizado!</Text>
                                     </View>
                                 )}
-                                <TouchableOpacity 
+                                <TouchableOpacity
                                     style={styles.cardRow}
                                     activeOpacity={0.7}
-                                    onPress={() => 
+                                    onPress={() =>
                                         router.push({
                                             pathname: '/appointment-details',
                                             params: { appointmentId: item.id },
@@ -181,9 +181,20 @@ export default function MyAppointments() {
                                             <Text style={styles.dateDay}>{item.date?.split('-')[2]}</Text>
                                             <Text style={styles.dateMonth}>
                                                 {
-                                                    ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][
-                                                        parseInt(item.date?.split('-')[1]) - 1
-                                                    ]
+                                                    [
+                                                        'Jan',
+                                                        'Fev',
+                                                        'Mar',
+                                                        'Abr',
+                                                        'Mai',
+                                                        'Jun',
+                                                        'Jul',
+                                                        'Ago',
+                                                        'Set',
+                                                        'Out',
+                                                        'Nov',
+                                                        'Dez',
+                                                    ][parseInt(item.date?.split('-')[1]) - 1]
                                                 }
                                             </Text>
                                         </View>

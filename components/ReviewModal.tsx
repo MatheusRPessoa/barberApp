@@ -1,9 +1,9 @@
 import { C } from '@/constants/Colors';
-import { appointmentService } from "@/services/appointmentService";
+import { appointmentService } from '@/services/appointmentService';
 import { Ionicons } from '@expo/vector-icons';
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { Modal, View, StyleSheet, Text, TouchableOpacity, TextInput } from "react-native";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { Modal, View, StyleSheet, Text, TouchableOpacity, TextInput } from 'react-native';
 
 export default function ReviewModal({
     visible,
@@ -22,14 +22,15 @@ export default function ReviewModal({
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-        mutationFn: () => appointmentService.review(appointmentId!, { RATING: rating, COMMENT: comment.trim() || undefined }),
+        mutationFn: () =>
+            appointmentService.review(appointmentId!, { RATING: rating, COMMENT: comment.trim() || undefined }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['appointments-mine'] });
             queryClient.invalidateQueries({ queryKey: ['barbers'] });
             handleClose();
         },
         onError: (err: unknown) => setError(err instanceof Error ? err.message : 'Erro ao enviar avaliação.'),
-    })
+    });
 
     function handleClose() {
         setRating(0);
@@ -84,16 +85,31 @@ export default function ReviewModal({
                 </View>
             </View>
         </Modal>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
     overlay: { flex: 1, backgroundColor: C.overlay, justifyContent: 'flex-end' },
-    sheet: { backgroundColor: C.bgSurface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40 },
+    sheet: {
+        backgroundColor: C.bgSurface,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 24,
+        paddingBottom: 40,
+    },
     title: { fontSize: 18, fontWeight: 'bold', color: C.textPrimary },
     subtitle: { fontSize: 13, color: C.textMuted, marginTop: 2, marginBottom: 20 },
     starsRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 20 },
-    input: { borderWidth: 1, borderColor: C.border, borderRadius: 8, padding: 12, minHeight: 80, textAlignVertical: 'top', fontSize: 14, color: C.textPrimary },
+    input: {
+        borderWidth: 1,
+        borderColor: C.border,
+        borderRadius: 8,
+        padding: 12,
+        minHeight: 80,
+        textAlignVertical: 'top',
+        fontSize: 14,
+        color: C.textPrimary,
+    },
     error: { color: C.danger, fontSize: 13, marginTop: 10 },
     row: { flexDirection: 'row', gap: 12, marginTop: 20 },
     btnCancel: { flex: 1, padding: 14, borderRadius: 10, borderWidth: 1, borderColor: C.border, alignItems: 'center' },

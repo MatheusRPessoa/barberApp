@@ -24,7 +24,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     const { user } = useAuth();
 
     useEffect(() => {
-        setNotifications([])
+        setNotifications([]);
     }, [user?.id]);
 
     const addNotification = useCallback((n: Omit<AppNotification, 'id' | 'read' | 'receivedAt'>) => {

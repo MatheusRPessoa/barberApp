@@ -14,5 +14,5 @@ export const couponService = {
     validate: (code: string, barberId: string) =>
         api.get<{ code: string; discount_percent: number; valid_until: string }>(
             `/coupons/validate?code=${encodeURIComponent(code.trim())}&barberId=${barberId}`
-        )
+        ),
 };

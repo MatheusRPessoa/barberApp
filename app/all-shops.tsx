@@ -116,8 +116,15 @@ const styles = StyleSheet.create({
     btnFeatured: { backgroundColor: C.primary },
     btnText: { color: C.bgSurface, fontWeight: '700', fontSize: 13 },
 
-    newBadge:      { alignSelf: 'flex-start', backgroundColor: C.infoBg, borderRadius: 4, paddingHorizontal: 7, paddingVertical: 2, marginTop: 3 },
-    newBadgeText:  { fontSize: 11, fontWeight: '700', color: C.info },
-    emptyContainer:{ alignItems: 'center', marginTop: 40, gap: 10 },
+    newBadge: {
+        alignSelf: 'flex-start',
+        backgroundColor: C.infoBg,
+        borderRadius: 4,
+        paddingHorizontal: 7,
+        paddingVertical: 2,
+        marginTop: 3,
+    },
+    newBadgeText: { fontSize: 11, fontWeight: '700', color: C.info },
+    emptyContainer: { alignItems: 'center', marginTop: 40, gap: 10 },
     emptyText: { color: C.textFaint, fontSize: 14, textAlign: 'center', marginTop: 10 },
 });

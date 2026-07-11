@@ -1,4 +1,5 @@
 import { C } from '@/constants/Colors';
+import CompleteModal from '@/components/CompleteModal';
 import { Appointment, appointmentService } from '@/services/appointmentService';
 import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -39,6 +40,7 @@ export default function Home() {
     const [service, setService] = useState('');
     const [time, setTime] = useState('');
     const { unreadCount } = useNotificationsContext();
+    const [completeId, setCompleteId] = useState<string | null>(null);
 
     const today = toDateString(new Date());
 
@@ -140,8 +142,11 @@ export default function Home() {
                     <TouchableOpacity
                         style={styles.card}
                         activeOpacity={0.7}
-                        onPress={() => 
-                            router.push({ pathname: '/appointment-details', params: { appointmentId: nextAppointment.id } })
+                        onPress={() =>
+                            router.push({
+                                pathname: '/appointment-details',
+                                params: { appointmentId: nextAppointment.id },
+                            })
                         }
                     >
                         <View style={styles.sectionHeader}>
@@ -170,7 +175,7 @@ export default function Home() {
                             {nextAppointment.appointment_status === 'CONFIRMED' && (
                                 <TouchableOpacity
                                     style={styles.actionBtnComplete}
-                                    onPress={() => handleUpdateStatus(nextAppointment.id, 'COMPLETED')}
+                                    onPress={() => setCompleteId(nextAppointment.id)}
                                 >
                                     <Text style={styles.actionBtnText}>Concluir</Text>
                                 </TouchableOpacity>
@@ -201,11 +206,11 @@ export default function Home() {
                         <Text style={styles.emptyText}>Nenhum agendamento próximo</Text>
                     ) : (
                         upcoming.slice(0, 4).map((item) => (
-                            <TouchableOpacity 
-                                key={item.id} 
+                            <TouchableOpacity
+                                key={item.id}
                                 style={styles.scheduleItem}
                                 activeOpacity={0.7}
-                                onPress={() => 
+                                onPress={() =>
                                     router.push({
                                         pathname: '/appointment-details',
                                         params: { appointmentId: item.id },
@@ -300,10 +305,11 @@ export default function Home() {
                     </View>
                 </View>
             </Modal>
-            <CancelModal
-                visible={cancelId !== null}
-                appointmentId={cancelId}
-                onClose={() => setCancelId(null)}
+            <CancelModal visible={cancelId !== null} appointmentId={cancelId} onClose={() => setCancelId(null)} />
+            <CompleteModal
+                visible={completeId !== null}
+                appointmentId={completeId}
+                onClose={() => setCompleteId(null)}
             />
         </SafeAreaView>
     );
@@ -411,7 +417,25 @@ const styles = StyleSheet.create({
     actionBtnComplete: { flex: 1, backgroundColor: C.info, borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
     actionBtnCancel: { flex: 1, backgroundColor: C.danger, borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
     actionBtnText: { color: C.bgSurface, fontWeight: '700', fontSize: 14 },
-    bellBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.bgSurface, alignItems: 'center', justifyContent: 'center' },
-    bellBadge: { position: 'absolute', top: -2, right: -2, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: C.danger, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 },
+    bellBtn: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: C.bgSurface,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    bellBadge: {
+        position: 'absolute',
+        top: -2,
+        right: -2,
+        minWidth: 16,
+        height: 16,
+        borderRadius: 8,
+        backgroundColor: C.danger,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 3,
+    },
     bellBadgeText: { fontSize: 9, fontWeight: '800', color: C.bgSurface },
 });

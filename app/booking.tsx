@@ -118,7 +118,7 @@ export default function Booking() {
         },
         onError: (err: unknown) => {
             setAppliedCoupon(null);
-            setCouponError(err instanceof Error ? err.message: 'Cupom inválido.');
+            setCouponError(err instanceof Error ? err.message : 'Cupom inválido.');
         },
     });
 
@@ -324,11 +324,11 @@ export default function Booking() {
                                 <View style={styles.couponInputRow}>
                                     <TextInput
                                         style={styles.couponInput}
-                                        placeholder='Código do cupom'
+                                        placeholder="Código do cupom"
                                         placeholderTextColor={C.textFaint}
                                         value={couponCode}
                                         onChangeText={(t) => setCouponCode(t.toUpperCase())}
-                                        autoCapitalize='characters'
+                                        autoCapitalize="characters"
                                         editable={!appliedCoupon}
                                     />
                                     {appliedCoupon ? (
@@ -342,20 +342,26 @@ export default function Booking() {
                                         >
                                             <Text style={styles.couponBtnText}>Remover</Text>
                                         </TouchableOpacity>
-                                    ): (
-                                        <TouchableOpacity 
-                                            style={[styles.couponBtn, (!couponCode || couponMutation.isPending) && styles.nextBtnDisabled]}
+                                    ) : (
+                                        <TouchableOpacity
+                                            style={[
+                                                styles.couponBtn,
+                                                (!couponCode || couponMutation.isPending) && styles.nextBtnDisabled,
+                                            ]}
                                             disabled={!couponCode || couponMutation.isPending}
                                             onPress={() => couponMutation.mutate()}
                                         >
-                                            <Text style={styles.couponBtnText}>{couponMutation.isPending ? '...' : 'Aplicar'}</Text>
+                                            <Text style={styles.couponBtnText}>
+                                                {couponMutation.isPending ? '...' : 'Aplicar'}
+                                            </Text>
                                         </TouchableOpacity>
                                     )}
                                 </View>
                                 {couponError !== '' && <Text style={styles.couponError}>{couponError}</Text>}
                                 {appliedCoupon && (
                                     <Text style={styles.couponOk}>
-                                        Cupom {appliedCoupon.code} aplicado - {appliedCoupon.discount_percent}% de desconto
+                                        Cupom {appliedCoupon.code} aplicado - {appliedCoupon.discount_percent}% de
+                                        desconto
                                     </Text>
                                 )}
                             </View>
@@ -368,12 +374,21 @@ export default function Booking() {
                                 {discount > 0 && (
                                     <View style={styles.summaryRow}>
                                         <Text style={styles.summaryLabel}>Desconto</Text>
-                                        <Text style={[styles.summaryValue, { color: C.success }]}>- R$ {discount.toFixed(2)}</Text>
+                                        <Text style={[styles.summaryValue, { color: C.success }]}>
+                                            - R$ {discount.toFixed(2)}
+                                        </Text>
                                     </View>
                                 )}
                                 <View style={[styles.summaryRow, { borderBottomWidth: 0 }]}>
-                                    <Text style={[styles.summaryLabel, { fontWeight: '700', color: C.textPrimary }]}>Total</Text>
-                                    <Text style={[styles.summaryValue, { color: C.success, fontWeight: '700', fontSize: 16 }]}>
+                                    <Text style={[styles.summaryLabel, { fontWeight: '700', color: C.textPrimary }]}>
+                                        Total
+                                    </Text>
+                                    <Text
+                                        style={[
+                                            styles.summaryValue,
+                                            { color: C.success, fontWeight: '700', fontSize: 16 },
+                                        ]}
+                                    >
                                         R$ {total.toFixed(2)}
                                     </Text>
                                 </View>
@@ -529,8 +544,23 @@ const styles = StyleSheet.create({
 
     couponBox: { marginBottom: 16 },
     couponInputRow: { flexDirection: 'row', gap: 8 },
-    couponInput: { flex: 1, borderWidth: 1, borderColor: C.border, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: C.textPrimary },
-    couponBtn: { backgroundColor: C.textPrimary, borderRadius: 8, paddingHorizontal: 16, justifyContent: 'center', alignItems: 'center' },
+    couponInput: {
+        flex: 1,
+        borderWidth: 1,
+        borderColor: C.border,
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        fontSize: 14,
+        color: C.textPrimary,
+    },
+    couponBtn: {
+        backgroundColor: C.textPrimary,
+        borderRadius: 8,
+        paddingHorizontal: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     couponBtnText: { color: C.bgSurface, fontWeight: '700', fontSize: 13 },
     couponError: { color: C.danger, fontSize: 12, marginTop: 6 },
     couponOk: { color: C.success, fontSize: 12, marginTop: 6 },

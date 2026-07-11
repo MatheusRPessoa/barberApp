@@ -37,16 +37,16 @@ function Rating({ rating }: { rating: number | null }) {
     );
 }
 
-function RealShopCard({ 
-    shop, 
-    featured, 
+function RealShopCard({
+    shop,
+    featured,
     onAgendar,
     onToggleFavorite,
-}: { 
-    shop: BarberShop; 
-    featured: boolean; 
+}: {
+    shop: BarberShop;
+    featured: boolean;
     onAgendar: () => void;
-    onToggleFavorite?: () => void; 
+    onToggleFavorite?: () => void;
 }) {
     return (
         <View style={[styles.listCard, featured && styles.listCardFeatured]}>
@@ -125,7 +125,7 @@ export default function ClientHome() {
         queryFn: () => favoriteService.list(coords ?? undefined),
         enabled: activeTab === 2,
         staleTime: 60_000,
-    })
+    });
 
     const queryClient = useQueryClient();
     const favoriteMutation = useMutation({
@@ -140,7 +140,7 @@ export default function ClientHome() {
 
     const serviceFilters = [...new Set(barbers.flatMap((b) => (b.services ?? []).map((s) => s.name)))];
 
-       function applyFilters(list: BarberShop[]) {
+    function applyFilters(list: BarberShop[]) {
         return list
             .filter((b) => !activeFilter || (b.services ?? []).some((s) => s.name === activeFilter))
             .filter((b) => search.trim() === '' || b.shop_name.toLowerCase().includes(search.trim().toLowerCase()));
@@ -299,8 +299,8 @@ export default function ClientHome() {
                                     {activeTab === 2
                                         ? 'Você ainda não favoritou nenhuma barbearia.'
                                         : activeTab === 1
-                                        ? 'Nenhuma barbearia em alta nos últimos 30 dias.'
-                                        : 'Nenhuma barbearia encontrada.'}
+                                          ? 'Nenhuma barbearia em alta nos últimos 30 dias.'
+                                          : 'Nenhuma barbearia encontrada.'}
                                 </Text>
                             ) : (
                                 tabData.map((shop, index) => (

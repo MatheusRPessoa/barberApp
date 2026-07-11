@@ -1,5 +1,6 @@
 import { C } from '@/constants/Colors';
 import CancelModal from '@/components/CancelModal';
+import CompleteModal from '@/components/CompleteModal';
 import { Appointment, appointmentService } from '@/services/appointmentService';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,6 +38,7 @@ export default function Schedule() {
     const queryClient = useQueryClient();
     const today = toDateString(new Date());
     const [cancelId, setCancelId] = useState<string | null>(null);
+    const [completeId, setCompleteId] = useState<string | null>(null);
 
     const {
         data: appointments = [],
@@ -60,16 +62,20 @@ export default function Schedule() {
     }
 
     const todayList = appointments
-        .filter((a: Appointment) => a.date === today)
+        .filter((a: Appointment) => a.date === today && a.appointment_status !== 'CANCELLED')
         .sort((a: Appointment, b: Appointment) => {
             const aPending = a.appointment_status === 'PENDING' ? 0 : 1;
             const bPending = b.appointment_status === 'PENDING' ? 0 : 1;
             if (aPending !== bPending) return aPending - bPending;
             return a.time.localeCompare(b.time);
-    });
+        });
+
+    const todayCancelledList = appointments
+        .filter((a: Appointment) => a.date === today && a.appointment_status === 'CANCELLED')
+        .sort((a: Appointment, b: Appointment) => a.time.localeCompare(b.time));
 
     const upcoming = appointments
-        .filter((a: Appointment) => a.date > today)
+        .filter((a: Appointment) => a.date > today && a.appointment_status !== 'CANCELLED')
         .sort((a: Appointment, b: Appointment) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
 
     const upcomingByDate = upcoming.reduce<Record<string, Appointment[]>>(
@@ -84,7 +90,7 @@ export default function Schedule() {
     const todayConfirmed = todayList.filter((a: Appointment) => a.appointment_status === 'CONFIRMED').length;
     const todayPending = todayList.filter((a: Appointment) => a.appointment_status === 'PENDING').length;
     const todayCompleted = todayList.filter((a: Appointment) => a.appointment_status === 'COMPLETED').length;
-    const todayCancelled = todayList.filter((a: Appointment) => a.appointment_status === 'CANCELLED').length;
+    const todayCancelled = todayCancelledList.length;
 
     const statusLabel = (s: Appointment['appointment_status']) =>
         ({ CONFIRMED: 'Confirmado', PENDING: 'Pendente', COMPLETED: 'Concluído', CANCELLED: 'Cancelado' })[s];
@@ -101,11 +107,11 @@ export default function Schedule() {
     function AppointmentCard({ item }: { item: Appointment }) {
         return (
             <View style={styles.card}>
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={styles.cardTop}
                     activeOpacity={0.7}
-                    onPress={() => 
-                        router.push({ pathname: '/appointment-details', params: { appointmentId:  item.id} })
+                    onPress={() =>
+                        router.push({ pathname: '/appointment-details', params: { appointmentId: item.id } })
                     }
                 >
                     <Text style={styles.time}>{item.time}</Text>
@@ -130,10 +136,7 @@ export default function Schedule() {
                         </TouchableOpacity>
                     )}
                     {item.appointment_status === 'CONFIRMED' && (
-                        <TouchableOpacity
-                            style={styles.btnComplete}
-                            onPress={() => handleUpdateStatus(item.id, 'COMPLETED')}
-                        >
+                        <TouchableOpacity style={styles.btnComplete} onPress={() => setCompleteId(item.id)}>
                             <Text style={styles.btnCompleteText}>Concluir</Text>
                         </TouchableOpacity>
                     )}
@@ -238,11 +241,44 @@ export default function Schedule() {
                         </View>
                     ))
                 )}
+                                {todayCancelledList.length > 0 && (
+                    <>
+                        <View style={[styles.sectionHeader, { marginTop: 24 }]}>
+                            <View style={[styles.sectionDot, { backgroundColor: C.danger }]} />
+                            <Text style={styles.sectionTitle}>Cancelados hoje</Text>
+                            <Text style={styles.sectionCount}>
+                                {todayCancelledList.length} cancelado{todayCancelledList.length !== 1 ? 's' : ''}
+                            </Text>
+                        </View>
+                        {todayCancelledList.map((item) => (
+                            <TouchableOpacity
+                                key={item.id}
+                                style={styles.cancelledCard}
+                                activeOpacity={0.7}
+                                onPress={() =>
+                                    router.push({ pathname: '/appointment-details', params: { appointmentId: item.id } })
+                                }
+                            >
+                                <Text style={styles.cancelledTime}>{item.time}</Text>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.cancelledName}>{item.client?.user?.name}</Text>
+                                    <Text style={styles.cancelledService}>
+                                        {(item.services ?? []).map((s) => s.name).join(' + ')}
+                                    </Text>
+                                </View>
+                                <View style={[styles.badge, styles.badgeRed]}>
+                                    <Text style={styles.badgeText}>Cancelado</Text>
+                                </View>
+                            </TouchableOpacity>
+                        ))}
+                    </>
+                )}
             </ScrollView>
-            <CancelModal
-                visible={cancelId !== null}
-                appointmentId={cancelId}
-                onClose={() => setCancelId(null)}
+            <CancelModal visible={cancelId !== null} appointmentId={cancelId} onClose={() => setCancelId(null)} />
+            <CompleteModal
+                visible={completeId !== null}
+                appointmentId={completeId}
+                onClose={() => setCompleteId(null)}
             />
         </SafeAreaView>
     );
@@ -317,4 +353,9 @@ const styles = StyleSheet.create({
     btnDisabled: { backgroundColor: C.bgDisabled },
     btnComplete: { flex: 1, backgroundColor: C.info, borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
     btnCompleteText: { color: C.bgSurface, fontWeight: '600', fontSize: 14 },
+
+    cancelledCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.bgSurface, borderRadius: 12, padding: 14, marginBottom: 10, opacity: 0.6 },
+    cancelledTime: { fontSize: 13, fontWeight: '600', color: C.textMuted },
+    cancelledName: { fontSize: 14, fontWeight: '600', color: C.textSecondary },
+    cancelledService: { fontSize: 12, color: C.textMuted, marginTop: 1 },
 });

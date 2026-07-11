@@ -21,4 +21,4 @@ export const BARBER_REAONS: CancelReason[] = [
 
 export const CANCEL_REASON_LABELS: Record<string, string> = Object.fromEntries(
     [...CLIENT_REASONS, ...BARBER_REAONS].map((r) => [r.code, r.label])
-)
+);

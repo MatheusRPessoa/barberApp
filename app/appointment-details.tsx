@@ -5,10 +5,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CancelModal from '@/components/CancelModal';
+import CompleteModal from '@/components/CompleteModal';
 import { CANCEL_REASON_LABELS } from '@/constants/cancelReasons';
+import ReviewModal from '@/components/ReviewModal';
 
 const STATUS_LABEL: Record<Appointment['appointment_status'], string> = {
     PENDING: 'Pendente',
@@ -35,6 +37,8 @@ export default function AppointmentDetails() {
     const { user } = useAuth();
     const isBarber = user?.type === 'BARBER';
     const [showCancel, setShowCancel] = useState(false);
+    const [showComplete, setShowComplete] = useState(false);
+    const [showReview, setShowReview] = useState(false);
 
     const [feedbackMsg, setFeedbackMsg] = useState('');
 
@@ -166,6 +170,43 @@ export default function AppointmentDetails() {
                             </View>
                         )}
                     </View>
+                    {!isBarber && status === 'CONFIRMED' && appointment.completion_code && (
+                        <View style={[styles.card, { alignItems: 'center' }]}>
+                            <Text style={styles.sectionTitle}>Código de conclusão</Text>
+                            <Text style={styles.pinCode}>{appointment.completion_code}</Text>
+                            <Text style={[styles.mainSub, { textAlign: 'center' }]}>
+                                Informe ao barbeiro somente quando o serviço terminar.
+                            </Text>
+                        </View>
+                    )}
+                    {status === 'COMPLETED' && appointment.review && (
+                        <View style={styles.card}>
+                            <Text style={styles.sectionTitle}>Avaliação</Text>
+                            <View style={{ flexDirection: 'row', gap: 2, marginBottom: 6 }}>
+                                {[1, 2, 3, 4, 5].map((n) => (
+                                    <Ionicons
+                                        key={n}
+                                        name={n <= appointment.review!.rating ? 'star' : 'star-outline'}
+                                        size={16}
+                                        color={C.primary}
+                                    />
+                                ))}
+                            </View>
+                            {appointment.review.comment ? (
+                                <Text style={styles.metaText}>“{appointment.review.comment}”</Text>
+                            ) : null}
+                            <Text style={[styles.serviceDuration, { marginTop: 6 }]}>
+                                {appointment.review.created_at.split('T')[0].split('-').reverse().join('/')}
+                            </Text>
+                        </View>
+                    )}
+
+                    {!isBarber && status === 'COMPLETED' && !appointment.reviewed && !appointment.review && (
+                        <TouchableOpacity style={styles.reviewBtn} onPress={() => setShowReview(true)}>
+                            <Ionicons name="star-outline" size={16} color={C.primary} />
+                            <Text style={styles.reviewBtnText}>Avaliar atendimento</Text>
+                        </TouchableOpacity>
+                    )}
 
                     {appointment.appointment_status === 'CANCELLED' && appointment.cancel_reason && (
                         <View style={styles.card}>
@@ -208,7 +249,7 @@ export default function AppointmentDetails() {
                                 <TouchableOpacity
                                     style={[styles.btnPrimary, updatingStatus && styles.btnDisabled]}
                                     disabled={updatingStatus}
-                                    onPress={() => updateStatus('COMPLETED')}
+                                    onPress={() => setShowComplete(true)}
                                 >
                                     <Text style={styles.btnPrimaryText}>Concluir</Text>
                                 </TouchableOpacity>
@@ -227,6 +268,18 @@ export default function AppointmentDetails() {
                         appointmentId={appointment.id}
                         onClose={() => setShowCancel(false)}
                         onCancelled={() => router.back()}
+                    />
+                    <CompleteModal
+                        visible={showComplete}
+                        appointmentId={appointment.id}
+                        onClose={() => setShowComplete(false)}
+                        onCompleted={() => router.back()}
+                    />
+                    <ReviewModal
+                        visible={showReview}
+                        appointmentId={appointment.id}
+                        shopName={appointment.barber?.shop_name ?? ''}
+                        onClose={() => setShowReview(false)}
                     />
                 </ScrollView>
             )}
@@ -310,4 +363,7 @@ const styles = StyleSheet.create({
     },
     btnCancelText: { color: C.danger, fontSize: 15, fontWeight: '700' },
     btnDisabled: { opacity: 0.5 },
+    pinCode: { fontSize: 40, fontWeight: '800', letterSpacing: 10, color: C.primary, marginVertical: 8 },
+    reviewBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.primaryBg, borderWidth: 1, borderColor: C.primary, borderRadius: 10, paddingVertical: 14, marginTop: 4 },
+    reviewBtnText: { color: C.primaryDark, fontSize: 15, fontWeight: '700' },
 });

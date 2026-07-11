@@ -1,5 +1,5 @@
-import { api } from "./api";
-import { BarberShop } from "./barberService";
+import { api } from './api';
+import { BarberShop } from './barberService';
 
 export const favoriteService = {
     add: (barberId: string) => api.post<void>(`/clients/me/favorites/${barberId}`, {}),

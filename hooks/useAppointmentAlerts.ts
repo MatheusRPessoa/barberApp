@@ -1,6 +1,6 @@
-import { useNotificationsContext } from "@/context/NotificationsContext";
-import { Appointment } from "@/services/appointmentService";
-import { useEffect, useRef } from "react";
+import { useNotificationsContext } from '@/context/NotificationsContext';
+import { Appointment } from '@/services/appointmentService';
+import { useEffect, useRef } from 'react';
 
 const STATUS_LABEL: Record<Appointment['appointment_status'], string> = {
     PENDING: 'Pendente',

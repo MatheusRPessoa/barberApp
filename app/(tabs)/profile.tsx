@@ -185,7 +185,10 @@ export default function Profile() {
     const menuItems: { label: string; icon: IoniconsName; onPress: () => void }[] = [
         { label: 'Editar Perfil', icon: 'person-outline', onPress: () => setEditModal(true) },
         ...(user?.type === 'BARBER'
-            ? [{ label: 'Meus Serviços', icon: 'cut-outline' as IoniconsName, onPress: () => setServicesModal(true) }]
+            ? [
+                { label: 'Meus Serviços', icon: 'cut-outline' as IoniconsName, onPress: () => setServicesModal(true) },
+                { label: 'Meu perfil público', icon: 'storefront-outline' as IoniconsName, onPress: () => router.push('/barbershop') },
+            ]
             : [
                   {
                       label: 'Meus Agendamentos',
